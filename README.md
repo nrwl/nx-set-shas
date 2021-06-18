@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          # We need to fetch all branches and commits so that Nx affected as a base to compare against.
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
 
       # In any subsequent steps within this job (primary) we can reference the resolved SHAs
