@@ -38,6 +38,12 @@ else
 
             TAG="HEAD~1"
         fi
+    else
+        echo ""
+        echo "Successfully found a matching tag on 'origin/$INPUTS_MAIN_BRANCH_NAME' based on the pattern '$INPUTS_TAG_MATCH_PATTERN'"
+        echo ""
+        echo "Matching tag: $TAG"
+        echo ""
     fi
 
     BASE_SHA=$(echo $(git rev-parse $TAG~0))
