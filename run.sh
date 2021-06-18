@@ -14,17 +14,7 @@ else
     TAG=$(git describe --tags `git rev-list --tags --max-count=1` --match="$INPUTS_TAG_MATCH_PATTERN" 2> /dev/null)
 
     if [ -z $TAG ]; then
-        if [ -z $INPUTS_ERROR_ON_NO_MATCHING_TAGS ]; then
-            echo ""
-            echo "WARNING: Unable to resolve a latest matching tag on 'origin/$INPUTS_MAIN_BRANCH_NAME' based on the pattern '$INPUTS_TAG_MATCH_PATTERN'"
-            echo ""
-            echo "We are therefore defaulting to use HEAD~1 on 'origin/$INPUTS_MAIN_BRANCH_NAME'"
-            echo ""
-            echo "NOTE: You can instead make this a hard error by settting 'error-on-no-matching-tags' on the action in your workflow."
-            echo ""
-
-            TAG="HEAD~1"
-        else
+        if [ $INPUTS_ERROR_ON_NO_MATCHING_TAGS = "true" ]; then
             echo ""
             echo "ERROR: Unable to resolve a latest matching tag on 'origin/$INPUTS_MAIN_BRANCH_NAME' based on the pattern '$INPUTS_TAG_MATCH_PATTERN'"
             echo ""
@@ -37,6 +27,16 @@ else
             echo ""
 
             exit 1
+        else
+            echo ""
+            echo "WARNING: Unable to resolve a latest matching tag on 'origin/$INPUTS_MAIN_BRANCH_NAME' based on the pattern '$INPUTS_TAG_MATCH_PATTERN'"
+            echo ""
+            echo "We are therefore defaulting to use HEAD~1 on 'origin/$INPUTS_MAIN_BRANCH_NAME'"
+            echo ""
+            echo "NOTE: You can instead make this a hard error by settting 'error-on-no-matching-tags' on the action in your workflow."
+            echo ""
+
+            TAG="HEAD~1"
         fi
     fi
 
