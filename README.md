@@ -1,8 +1,54 @@
 # nx-set-shas
 
-## Usage
+## Example Usage
 
-<!-- start usage -->
+**.github/workflows/ci.yml**
+
+<!-- start example-usage -->
+```yaml
+# ... more CI config ...
+
+jobs:
+  primary:
+    runs-on: ubuntu-latest
+    name: Primary
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # We need to fetch all branches and commits so that Nx affected as a base to compare against.
+          fetch-depth: 0
+
+      # In any subsequent steps within this job (primary) we can reference the resolved SHAs
+      # using either the step outputs or environment variables:
+
+      # ===========================================================================
+      # OPTION 1) Environment variables
+      # ===========================================================================
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v1
+    
+      - run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"
+
+      # ===========================================================================
+      # OPTION 2) Step outputs (in this case we must give the step an "id")
+      # ===========================================================================
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        id: setSHAs
+        uses: nrwl/nx-set-shas@v1
+    
+      - run: |
+          echo "BASE: ${{ steps.setSHAs.outputs.base }}"
+          echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
+
+      # ... more CI config ...
+```
+<!-- end example-usage -->
+
+## Configuration Options
+
+<!-- start configuration-options -->
 ```yaml
 - uses: nrwl/nx-set-shas@v1
   with:
@@ -30,4 +76,4 @@
     # Default: false
     error-on-no-matching-tags: ''
 ```
-<!-- end usage -->
+<!-- end configuration-options -->
