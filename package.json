@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/tgymnich/publish-github-action"
+}

@@ -1,0 +1,15 @@
+name: "Publish"
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: tgymnich/publish-github-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
