@@ -10,6 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: jameshenry/publish-action@v0.2
+      - uses: jameshenry/publish-shell-action@v0.3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
