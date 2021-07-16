@@ -5,14 +5,14 @@ inputs:
   main-branch-name:
     description: 'The name of the main branch in your repo, used as the target of PRs. E.g. main, master etc'
     default: 'main'
-  tag-match-pattern:
-    description: 'The glob(7) pattern to be provided to `git describe --match` in order to match against the latest relevant tag on the specified main branch'
-    default: 'nx_successful_ci_run*'
   set-environment-variables-for-job:
     description: 'Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job'
     default: 'true'
-  error-on-no-matching-tags:
-    description: 'By default, if no matching tags are found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.'
+  error-on-no-successful-workflow:
+    description: 'By default, if no successful workflow is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.'
+  workflow-id:
+    description: 'The ID of the workflow to track or name of the file name. E.g. ci.yml'
+    required: true
 
 outputs:
   base:
@@ -28,7 +28,7 @@ runs:
     - name: Set base and head SHAs used for nx affected
       id: setSHAs
       shell: bash
-      run: ${{ github.action_path }}/run.sh '${{ github.event_name }}' '${{ inputs.main-branch-name }}' '${{ inputs.tag-match-pattern }}' '${{ inputs.error-on-no-matching-tags }}'
+      run: ${{ github.action_path }}/run.sh '${{ inputs.workflow-id }}' '${{ github.event_name }}' '${{ inputs.main-branch-name }}' '${{ inputs.error-on-no-successful-workflow }}'
 
     - name: Log base and head SHAs used for nx affected
       shell: bash
