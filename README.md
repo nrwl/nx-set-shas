@@ -3,14 +3,14 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 
 <h1 align="center">Set SHAs Action</h2>
 
-> ✨ A Github Action which sets the base and head SHAs required for `nx affected` commands in CI
+✨ A Github Action which sets the base and head SHAs required for `nx affected` commands in CI
 
 - [Example Usage](#example-usage)
 - [Configuration Options](#configuration-options)
 - [Background](#background)
 - [License](#license)
 
-> This documentation is for version 2.x.x. You can find documentation for version 1.x.x [here](https://github.com/nrwl/nx-set-shas/blob/c8f5a54f6ee7f2127f3df063f36a0242faee4cb7/README.md).
+**NOTE: This documentation is for version 2.x.x** which now uses the GitHub API to track successful workflows. You can find documentation for version 1.x.x which used git tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
 
 ## Example Usage
 
@@ -64,7 +64,7 @@ jobs:
 
 <!-- start configuration-options -->
 ```yaml
-- uses: nrwl/nx-set-shas@v1
+- uses: nrwl/nx-set-shas@v2
   with:
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
