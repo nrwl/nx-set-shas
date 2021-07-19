@@ -138,7 +138,9 @@ only the affected projects?
 
 What are the `FROM` and `TO` commits in that case?
 
-They can't be just `HEAD` and `HEAD~1` as some of those run might fail. If a few deployments fail one after another, that means that we're accumulating a list of affected projects that are not getting deployed. Anytime we retry the deployment, we want to include **every commit since the last time we deployed successfully**. That way we ensure we don't accidentally skip deploying a project that has changed.
+Conceptually, what we want is to use the absolute latest commit on the `master` branch as the HEAD, and the previous _successful_ commit on `master` as the BASE. Note, we want the previous _successful_ one because it is still possible for commits on the `master` branch to fail for a variety of reasons.
+
+The commits therefore can't just be `HEAD` and `HEAD~1`. If a few deployments fail one after another, that means that we're accumulating a list of affected projects that are not getting deployed. Anytime we retry the deployment, we want to include **every commit since the last time we deployed successfully**. That way we ensure we don't accidentally skip deploying a project that has changed.
 
 This action enables you to find:
 * Commit SHA from which PR originated (in the case of `pull_request`)
