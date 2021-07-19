@@ -10,7 +10,7 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 - [Background](#background)
 - [License](#license)
 
-> This documentation is for version 2.x.x. If you are using version 1.x.x you also need to include accomplanying [nx-tag-successful-ci-run](https://github.com/nrwl/nx-tag-successful-ci-run) as the last step of your job, since version 1.x.x depends on the existance of git tags that mark successful runs.
+> This documentation is for version 2.x.x. If can find documentation for version 1.x.x [here](https://github.com/nrwl/nx-set-shas/blob/c8f5a54f6ee7f2127f3df063f36a0242faee4cb7/README.md).
 
 ## Example Usage
 
@@ -59,23 +59,6 @@ jobs:
       - run: |
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
-
-      # ===========================================================================
-      # OPTION 3) Specify all parameters
-      # ===========================================================================
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
-        with:
-          main-branch-name: 'main'
-          set-environment-variables-for-job: 'true'
-          error-on-no-successful-workflow: 'false'
-          workflow-id: 'ci.yml'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-      - run: |
-          echo "BASE: ${{ env.NX_BASE }}"
-          echo "HEAD: ${{ env.NX_HEAD }}"          
 
       # ... more CI config ...
 ```
