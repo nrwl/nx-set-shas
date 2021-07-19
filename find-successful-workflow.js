@@ -2,10 +2,12 @@ const { Octokit } = require("@octokit/action");
 const core = require("@actions/core");
 const { execSync } = require('child_process');
 
-const branch = process.argv[2];
-const workflowId = process.argv[3];
+const token = process.argv[2];
+const branch = process.argv[3];
+const workflowId = process.argv[4];
 const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
 const run_id = process.env.GITHUB_RUN_ID;
+process.env.GITHUB_TOKEN = token;
 
 (async () => {
   try {

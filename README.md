@@ -38,8 +38,6 @@ jobs:
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -53,8 +51,6 @@ jobs:
         uses: nrwl/nx-set-shas@v2
         with:
           set-environment-variables-for-job: 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
       - run: |
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
@@ -69,13 +65,6 @@ jobs:
 <!-- start configuration-options -->
 ```yaml
 - uses: nrwl/nx-set-shas@v1
-  env:
-    # The github token needed to provide access to APIs.
-    # Use ${{ secrets.GITHUB_TOKEN }} as a value
-    #
-    # Required: true
-    GITHUB_TOKEN: ''
-
   with:
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
