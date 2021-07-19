@@ -130,7 +130,7 @@ This makes it easy to set-up a CI system that scales well with the continous gro
 
 Figuring out what these two git commits are might not be as simple as it seems.
 
-On a CI system that runs on submitted PRs, we determine what commits to include in the **affected** calculation by comparing our `HEAD-commit-of-PR-branch`to the commit in main branch (`master` or `main` usually) from which the PR branch originated. This will ensure our PR in whole is always being tested.
+On a CI system that runs on submitted PRs, we determine what commits to include in the **affected** calculation by comparing our `HEAD-commit-of-PR-branch` to the commit in main branch (`master` or `main` usually) from which the PR branch originated. This will ensure the entirety of our PR is always being tested.
 
 But what if we want to set up a continuous deployment system
 that, as changes get pushed to `master`, it builds and deploys
