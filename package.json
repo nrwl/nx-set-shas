@@ -1,5 +1,9 @@
 {
   "private": true,
-  "version": "1.0.1",
-  "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action"
+  "version": "2.0.0",
+  "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@octokit/action": "^3.10.10"
+  }
 }
