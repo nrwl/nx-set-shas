@@ -60,6 +60,23 @@ jobs:
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
+      # ===========================================================================
+      # OPTION 3) Specify all parameters
+      # ===========================================================================
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v2
+        with:
+          main-branch-name: 'main'
+          set-environment-variables-for-job: 'true'
+          error-on-no-successful-workflow: 'false'
+          workflow-id: 'ci.yml'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+      - run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"          
+
       # ... more CI config ...
 ```
 <!-- end example-usage -->
@@ -92,6 +109,11 @@ jobs:
     #
     # Default: false
     error-on-no-successful-workflow: ''
+
+    # The ID of the github action workflow to check for successful run or the name of the file name containing the workflow. 
+    # E.g. 'ci.yml'. If not provided, current workflow id will be used
+    #
+    workflow-id: ''
 ```
 <!-- end configuration-options -->
 
