@@ -10,7 +10,7 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 - [Background](#background)
 - [License](#license)
 
-> This documentation is for version 2.x.x. If can find documentation for version 1.x.x [here](https://github.com/nrwl/nx-set-shas/blob/c8f5a54f6ee7f2127f3df063f36a0242faee4cb7/README.md).
+> This documentation is for version 2.x.x. You can find documentation for version 1.x.x [here](https://github.com/nrwl/nx-set-shas/blob/c8f5a54f6ee7f2127f3df063f36a0242faee4cb7/README.md).
 
 ## Example Usage
 
