@@ -1,17 +1,16 @@
 #!/bin/bash
 
 # We are the only consumers of this script (within action.yml), so no great need for input validation here
-GITHUB_WORKFLOW_ID=$1
-GITHUB_EVENT_NAME=$2
-INPUTS_MAIN_BRANCH_NAME=$3
-INPUTS_ERROR_ON_NO_SUCCESSFUL_WORKFLOW=$4
+GITHUB_EVENT_NAME=$1
+INPUTS_MAIN_BRANCH_NAME=$2
+INPUTS_ERROR_ON_NO_SUCCESSFUL_WORKFLOW=$3
 
 if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
     BASE_SHA=$(echo $(git merge-base origin/$INPUTS_MAIN_BRANCH_NAME HEAD))
 else
     # For the base SHA for main builds we use the latest matching tag as a marker for the last commit which was successfully built.
     # We use 2> /dev/null to swallow any direct errors from the command itself so we can provide more useful messaging
-    BASE_SHA=$(node .github/actions/nx-set-shas/find-successful-workflow.js $GITHUB_WORKFLOW_ID $INPUTS_MAIN_BRANCH_NAME)
+    BASE_SHA=$(node .github/actions/nx-set-shas/find-successful-workflow.js $INPUTS_MAIN_BRANCH_NAME)
 
     if [ -z $BASE_SHA ]; then
         if [ $INPUTS_ERROR_ON_NO_SUCCESSFUL_WORKFLOW = "true" ]; then

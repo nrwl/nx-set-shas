@@ -38,8 +38,6 @@ jobs:
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
-        with:
-          workflow-id: 'ci.yml'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -54,7 +52,7 @@ jobs:
         id: setSHAs
         uses: nrwl/nx-set-shas@v2
         with:
-          workflow-id: 'ci.yml'
+          set-environment-variables-for-job: 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -79,12 +77,6 @@ jobs:
     GITHUB_TOKEN: ''
 
   with:
-    # The ID of the github action workflow to check for successful run or name of the file name containing the workflow. 
-    # E.g. 'ci.yml'
-    #
-    # Required: true
-    workflow-id: ''
-
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
     #

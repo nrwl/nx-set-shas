@@ -2,13 +2,20 @@ const { Octokit } = require("@octokit/action");
 const core = require("@actions/core");
 const { execSync } = require('child_process');
 
-const workflow_id = process.argv[2];
-const branch = process.argv[3];
+const branch = process.argv[2];
 const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+const run_id = process.env.GITHUB_RUN_ID;
 
 (async () => {
   try {
     const octokit = new Octokit();
+    // retrieve workflow-id
+    const workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
+      owner,
+      repo,
+      branch,
+      run_id
+    }).then(({ data: { workflow_id } }) => workflow_id);
     // fetch all workflow runs on a given repo/branch/workflow with push and success
     const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
       owner,
