@@ -10,6 +10,7 @@ inputs:
     default: "true"
   error-on-no-successful-workflow:
     description: "By default, if no successful workflow is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead."
+    default: "false"
   workflow-id:
     description: "The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow"
 
@@ -27,7 +28,7 @@ runs:
     - name: Set base and head SHAs used for nx affected
       id: setSHAs
       shell: bash
-      run: ${{ github.action_path }}/run.sh ${{ github.token }} ${{ github.event_name }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.workflow-id }}
+      run: node ${{ github.action_path }}/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.workflow-id }}
 
     - name: Log base and head SHAs used for nx affected
       shell: bash
