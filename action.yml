@@ -48,3 +48,6 @@ runs:
           echo "NX_HEAD=${{ steps.setSHAs.outputs.head }}" >> $GITHUB_ENV
           echo "NX_BASE and NX_HEAD environment variables have been set for the current Job"
         fi
+branding:
+  icon: "terminal"
+  color: "blue"
