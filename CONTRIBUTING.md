@@ -2,6 +2,8 @@
 
 In order to publish a new version of the action, simply update the "version" in the package.json and merge into the main branch.
 
+If your changed files include `find-successful-workflow.js`, then you should also update the bundle in the `dist` folder using `npm run build`.
+
 The workflow at ./github/workflows/publish.yml will apply the new version in the form of tags, which is all that is needed to publish an Action.
 
 Example of tags applied:
