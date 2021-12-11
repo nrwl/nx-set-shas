@@ -8,6 +8,7 @@ process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const workflowId = process.argv[5];
+const lastSuccessfulEvent = process.argv[6];
 
 let BASE_SHA;
 (async () => {
@@ -17,7 +18,7 @@ let BASE_SHA;
     BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
   } else {
     try {
-      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName);
+      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
     } catch (e) {
       core.setFailed(e.message);
       return;
@@ -65,7 +66,7 @@ function reportFailure(branchName) {
  * @param {string} branch
  * @returns
  */
-async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch) {
+async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
   const octokit = new Octokit();
   if (!workflow_id) {
     workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
@@ -81,7 +82,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch) {
     repo,
     branch,
     workflow_id,
-    event: 'push',
+    event: lastSuccessfulEvent,
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
