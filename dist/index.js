@@ -6371,8 +6371,8 @@ const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
-const workflowId = process.argv[5];
-const lastSuccessfulEvent = process.argv[6];
+const lastSuccessfulEvent = process.argv[5];
+const workflowId = process.argv[6];
 
 let BASE_SHA;
 (async () => {
