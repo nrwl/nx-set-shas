@@ -44,8 +44,10 @@ let BASE_SHA;
       process.stdout.write(`Commit: ${BASE_SHA}\n`);
     }
   }
-  core.setOutput('base', BASE_SHA);
-  core.setOutput('head', HEAD_SHA);
+
+  const stripNewLineEndings = sha => sha.replace('\n', '');
+  core.setOutput('base', stripNewLineEndings(BASE_SHA));
+  core.setOutput('head', stripNewLineEndings(HEAD_SHA));
 })();
 
 function reportFailure(branchName) {
