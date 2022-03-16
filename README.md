@@ -21,16 +21,16 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 # ... more CI config ...
 
 jobs:
-  primary:
+  myjob:
     runs-on: ubuntu-latest
-    name: Primary
+    name: My Job
     steps:
       - uses: actions/checkout@v2
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
 
-      # In any subsequent steps within this job (primary) we can reference the resolved SHAs
+      # In any subsequent steps within this job (myjob) we can reference the resolved SHAs
       # using either the step outputs or environment variables:
 
       # ===========================================================================
@@ -86,6 +86,20 @@ jobs:
     workflow-id: ''
 ```
 <!-- end configuration-options -->
+
+## Permissions in v2
+
+This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`:
+
+```yaml
+jobs:
+  myjob:
+    runs-on: ubuntu-latest
+    name: My Job
+    permissions:
+      contents: 'read'
+      actions: 'write'
+```
 
 ## Background
 
