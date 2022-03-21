@@ -16,6 +16,9 @@ inputs:
     default: "push"
   workflow-id:
     description: "The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow"
+  working-directory:
+    description: "The directory where your repository is located"
+    default: "."
 
 outputs:
   base:
@@ -34,7 +37,7 @@ runs:
     - name: Set base and head SHAs used for nx affected
       id: setSHAs
       shell: bash
-      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.workflow-id }}
+      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.workflow-id }} ${{ inputs.working-directory }}
 
     - name: Log base and head SHAs used for nx affected
       shell: bash

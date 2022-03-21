@@ -2,6 +2,7 @@ const { Octokit } = require("@octokit/action");
 const core = require("@actions/core");
 const github = require('@actions/github');
 const { execSync } = require('child_process');
+const { join } = require('path');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
@@ -9,9 +10,14 @@ const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workflowId = process.argv[6];
+const workingDirectory = process.argv[7];
 
 let BASE_SHA;
 (async () => {
+  if (workingDirectory) {
+    process.chdir(join(__dirname, workingDirectory))
+  }
+
   const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
 
   if (eventName === 'pull_request') {
