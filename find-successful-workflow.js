@@ -10,8 +10,8 @@ process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
-const workflowId = process.argv[6];
-const workingDirectory = process.argv[7];
+const workingDirectory = process.argv[6];
+const workflowId = process.argv[7];
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA;

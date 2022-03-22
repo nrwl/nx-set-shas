@@ -80,6 +80,11 @@ jobs:
     # Default: false
     error-on-no-successful-workflow: ''
 
+    # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
+    #
+    # Default: .
+    working-directory: ''
+
     # The ID of the github action workflow to check for successful run or the name of the file name containing the workflow. 
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
