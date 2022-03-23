@@ -2,16 +2,29 @@ const { Octokit } = require("@octokit/action");
 const core = require("@actions/core");
 const github = require('@actions/github');
 const { execSync } = require('child_process');
+const { existsSync } = require('fs');
+const { join } = require('path');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
-const workflowId = process.argv[6];
+const workingDirectory = process.argv[6];
+const workflowId = process.argv[7];
+const defaultWorkingDirectory = '.';
 
 let BASE_SHA;
 (async () => {
+  if (workingDirectory !== defaultWorkingDirectory) {
+    if (existsSync(workingDirectory)) {
+      process.chdir(join(__dirname, workingDirectory));
+    } else {
+      process.stdout.write('\n');
+      process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
+    }
+  }
+
   const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
 
   if (eventName === 'pull_request') {
@@ -33,7 +46,7 @@ let BASE_SHA;
         process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}'\n`);
         process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
         process.stdout.write('\n');
-        process.stdout.write(`NOTE: You can instead make this a hard error by settting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
+        process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
         BASE_SHA = execSync(`git rev-parse HEAD~1`, { encoding: 'utf-8' });
         core.setOutput('noPreviousBuild', 'true');

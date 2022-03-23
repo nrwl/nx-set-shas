@@ -14,6 +14,9 @@ inputs:
   last-successful-event:
     description: "The type of event to check for the last successful commit corresponding to that workflow-id, E.g. push, pull-request, release etc"
     default: "push"
+  working-directory:
+    description: "The directory where your repository is located"
+    default: "."
   workflow-id:
     description: "The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow"
 
@@ -34,7 +37,7 @@ runs:
     - name: Set base and head SHAs used for nx affected
       id: setSHAs
       shell: bash
-      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.workflow-id }}
+      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.working-directory }} ${{ inputs.workflow-id }}
 
     - name: Log base and head SHAs used for nx affected
       shell: bash
