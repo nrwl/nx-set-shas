@@ -66,24 +66,19 @@ jobs:
   with:
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
-    #
-    # Default: main
-    main-branch-name: ''
+    main-branch-name: 'main'
 
     # Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job.
-    #
-    # Default: true
-    set-environment-variables-for-job: ''
+    set-environment-variables-for-job: true
 
     # By default, if no successful workflow run is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.
-    #
-    # Default: false
-    error-on-no-successful-workflow: ''
+    error-on-no-successful-workflow: false
+    
+    # The type of event to check for the last successful commit corresponding to that workflow-id, E.g. push, pull-request, release etc
+    last-successful-event: 'push'
 
     # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
-    #
-    # Default: .
-    working-directory: ''
+    working-directory: '.'
 
     # The ID of the github action workflow to check for successful run or the name of the file name containing the workflow. 
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
