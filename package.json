@@ -13,7 +13,7 @@
   "dependencies": {
     "@actions/core": "^1.4.0",
     "@actions/github": "^5.0.0",
-    "@octokit/action": "^3.10.10",
+    "@octokit/action": "^3.18.1",
     "@vercel/ncc": "^0.29.0"
   }
 }
