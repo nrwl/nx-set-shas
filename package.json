@@ -1,10 +1,10 @@
 {
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "license": "MIT",
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
   "scripts": {
-    "build": "ncc build find-successful-workflow.js --license licenses.txt"
+    "build": "ncc build find-successful-workflow.js --no-source-map-register --license licenses.txt"
   },
   "bugs": {
     "url": "https://github.com/nrwl/nx-set-shas/issues"
@@ -14,6 +14,6 @@
     "@actions/core": "^1.4.0",
     "@actions/github": "^5.0.0",
     "@octokit/action": "^3.18.1",
-    "@vercel/ncc": "^0.29.0"
+    "@vercel/ncc": "^0.33.4"
   }
 }
