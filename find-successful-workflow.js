@@ -18,7 +18,7 @@ let BASE_SHA;
 (async () => {
   if (workingDirectory !== defaultWorkingDirectory) {
     if (existsSync(workingDirectory)) {
-      process.chdir(join(__dirname, workingDirectory));
+      process.chdir(workingDirectory);
     } else {
       process.stdout.write('\n');
       process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
