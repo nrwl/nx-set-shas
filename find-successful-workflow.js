@@ -99,7 +99,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     owner,
     repo,
     // on release workflow runs do not have branch property
-    branch: lastSuccessfulEvent === "release" ? undefined : branch,
+    branch: lastSuccessfulEvent === 'release' ? undefined : branch,
     workflow_id,
     event: lastSuccessfulEvent,
     status: 'success'
