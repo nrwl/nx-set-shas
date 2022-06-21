@@ -12,7 +12,7 @@ inputs:
     description: "By default, if no successful workflow is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead."
     default: "false"
   last-successful-event:
-    description: "The type of event to check for the last successful commit corresponding to that workflow-id, E.g. push, pull-request, release etc"
+    description: "The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull-request, release etc"
     default: "push"
   working-directory:
     description: "The directory where your repository is located"
