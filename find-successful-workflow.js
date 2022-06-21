@@ -97,7 +97,8 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
     owner,
     repo,
-    branch,
+    // on release workflow runs do not have branch property
+    branch: lastSuccessfulEvent === 'release' ? undefined : branch,
     workflow_id,
     event: lastSuccessfulEvent,
     status: 'success'
