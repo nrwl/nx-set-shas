@@ -80,6 +80,11 @@ jobs:
     # Default: false
     error-on-no-successful-workflow: ''
 
+    # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull-request, release etc.
+    #
+    # Default: push
+    last-successful-event: ''
+
     # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
     #
     # Default: .
