@@ -26,7 +26,7 @@
  *
  */
 
- const globalsList = [
+const globalsList = [
 	'Number',
 	'String',
 	'Boolean',
