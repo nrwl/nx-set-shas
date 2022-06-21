@@ -4,16 +4,25 @@
   "license": "MIT",
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
   "scripts": {
-    "build": "ncc build find-successful-workflow.js --license licenses.txt"
+    "build": "ncc build find-successful-workflow.js --license licenses.txt",
+    "prepare": "is-ci || husky install"
   },
   "bugs": {
     "url": "https://github.com/nrwl/nx-set-shas/issues"
+  },
+  "engines": {
+    "node": ">=14"
   },
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
     "@actions/core": "^1.4.0",
     "@actions/github": "^5.0.0",
-    "@octokit/action": "^3.18.1",
-    "@vercel/ncc": "^0.29.0"
+    "@octokit/action": "^3.18.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.29.0",
+    "chalk": "^4.1.2",
+    "husky": "^8.0.1",
+    "is-ci": "^3.0.1"
   }
 }

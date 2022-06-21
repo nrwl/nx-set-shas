@@ -3,7 +3,6 @@ const core = require("@actions/core");
 const github = require('@actions/github');
 const { execSync } = require('child_process');
 const { existsSync } = require('fs');
-const { join } = require('path');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
