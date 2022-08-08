@@ -62840,7 +62840,7 @@ let BASE_SHA;
         process.stdout.write('\n');
         process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
-        BASE_SHA = execSync(`git rev-parse HEAD~1`, { encoding: 'utf-8' });
+        BASE_SHA = execSync(`git rev-parse origin/${mainBranchName}~1`, { encoding: 'utf-8' });
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
