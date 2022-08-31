@@ -6,11 +6,11 @@ const { existsSync } = require('fs');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3];
-const errorOnNoSuccessfulWorkflow = process.argv[4];
-const lastSuccessfulEvent = process.argv[5];
-const workingDirectory = process.argv[6];
-const workflowId = process.argv[7];
+const mainBranchName = core.getInput('main-branch-name');
+const errorOnNoSuccessfulWorkflow = core.getInput('error-on-no-successful-workflow');
+const lastSuccessfulEvent = core.getInput('last-successful-event');
+const workingDirectory = core.getInput('working-directory');
+const workflowId = core.getInput('workflow-id');
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA;
@@ -27,7 +27,7 @@ let BASE_SHA;
   const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
 
   if (eventName === 'pull_request') {
-    BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
+    BASE_SHA = execSync(`git merge-base origin/"${mainBranchName}" HEAD`, { encoding: 'utf-8' });
   } else {
     try {
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
