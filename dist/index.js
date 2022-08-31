@@ -62798,7 +62798,6 @@ const { execSync } = __nccwpck_require__(3129);
 const { existsSync } = __nccwpck_require__(5747);
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
-process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = core.getInput('main-branch-name');
 const errorOnNoSuccessfulWorkflow = core.getInput('error-on-no-successful-workflow');
 const lastSuccessfulEvent = core.getInput('last-successful-event');

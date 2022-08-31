@@ -5,7 +5,6 @@ const { execSync } = require('child_process');
 const { existsSync } = require('fs');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
-process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = core.getInput('main-branch-name');
 const errorOnNoSuccessfulWorkflow = core.getInput('error-on-no-successful-workflow');
 const lastSuccessfulEvent = core.getInput('last-successful-event');
