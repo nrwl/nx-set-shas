@@ -18,8 +18,8 @@ let BASE_SHA;
     if (existsSync(workingDirectory)) {
       process.chdir(workingDirectory);
     } else {
-      process.stdout.write('\n');
-      process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
+      core.warning('\n');
+      core.warning(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
     }
   }
 
@@ -40,19 +40,19 @@ let BASE_SHA;
         reportFailure(mainBranchName);
         return;
       } else {
-        process.stdout.write('\n');
-        process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}'\n`);
-        process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
-        process.stdout.write('\n');
-        process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
+        core.warning('\n');
+        core.warning(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}'\n`);
+        core.warning(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
+        core.warning('\n');
+        core.warning(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
         BASE_SHA = execSync(`git rev-parse HEAD~1`, { encoding: 'utf-8' });
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
-      process.stdout.write('\n');
-      process.stdout.write(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
-      process.stdout.write(`Commit: ${BASE_SHA}\n`);
+      core.info('\n');
+      core.info(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
+      core.info(`Commit: ${BASE_SHA}\n`);
     }
   }
 
@@ -89,8 +89,8 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
       branch,
       run_id
     }).then(({ data: { workflow_id } }) => workflow_id);
-    process.stdout.write('\n');
-    process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
+    core.info('\n');
+    core.info(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
   }
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
