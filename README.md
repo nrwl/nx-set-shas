@@ -108,7 +108,7 @@ jobs:
     name: My Job
     permissions:
       contents: 'read'
-      actions: 'write'
+      actions: 'read'
 ```
 
 ## Background
