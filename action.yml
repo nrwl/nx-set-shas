@@ -38,6 +38,12 @@ runs:
       id: setSHAs
       env:
         GITHUB_TOKEN: ${{ github.token }}
+        # Input parameters are not automatically set as environment variables in composite actions
+        INPUT_MAIN_BRANCH_NAME: ${{ inputs.main-branch-name }}
+        INPUT_ERROR_ON_NO_SUCCESSFUL_WORKFLOW: ${{ inputs.error-on-no-successful-workflow }}
+        INPUT_LAST_SUCCESSFUL_EVENT: ${{ inputs.last-successful-event }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        INPUT_WORKFLOW_ID: ${{ inputs.workflow-id }}
       shell: bash
       run: node $GITHUB_ACTION_PATH/dist/index.js
 
