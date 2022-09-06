@@ -21,6 +21,6 @@ jobs:
       fail-fast: false
     uses: ./.github/workflows/integration-test-workflow.yml
     with:
-      working-directory: ./integration-test
+      working-directory: integration-test
       main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
       runs-on: ${{ matrix.runs-on }}
