@@ -128,7 +128,7 @@ On a CI system that runs on submitted PRs, we determine what commits to include 
 
 But what if we want to set up a continuous deployment system
 that, as changes get pushed to `master`, builds and deploys
-
+only the affected projects?
 What are the `FROM` and `TO` commits in that case?
 
 Conceptually, what we want is to use the absolute latest commit on the `master` branch as the HEAD, and the previous _successful_ commit on the `master` as the BASE. Note, we want the previous _successful_ one because it is still possible for commits on the `master` branch to fail for a variety of reasons.
