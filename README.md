@@ -10,7 +10,7 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 - [Background](#background)
 - [License](#license)
 
-**NOTE:** This documentation is for version `2.x.x` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
+**NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
 
 ## Example Usage
 
@@ -37,7 +37,7 @@ jobs:
       # OPTION 1) Environment variables
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v3
     
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -48,7 +48,7 @@ jobs:
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         id: setSHAs
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v3
     
       - run: |
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
@@ -62,7 +62,7 @@ jobs:
 
 <!-- start configuration-options -->
 ```yaml
-- uses: nrwl/nx-set-shas@v2
+- uses: nrwl/nx-set-shas@v3
   with:
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
@@ -97,7 +97,7 @@ jobs:
 ```
 <!-- end configuration-options -->
 
-## Permissions in v2
+## Permissions in v2+
 
 This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`:
 
