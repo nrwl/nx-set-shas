@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: actions-nx-set-shas
+  description: "Action to determine which projects in the repository have changed between commits"
+  annotations:
+    github.com/project-slug: Tradeshift/actions-nx-set-shas
+  tags:
+    - github-action
+spec:
+  type: other
+  lifecycle: experimental
+  owner: cash-payments
