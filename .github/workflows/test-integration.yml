@@ -15,12 +15,8 @@ concurrency:
 jobs:
   test:
     name: Test workflow integration
-    strategy:
-      matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
-      fail-fast: false
     uses: ./.github/workflows/integration-test-workflow.yml
     with:
       working-directory: integration-test
       main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
-      runs-on: ${{ matrix.runs-on }}
+      runs-on: ubuntu-latest
