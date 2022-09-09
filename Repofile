@@ -1,0 +1,13 @@
+{
+    "checks": [
+        "Test",
+        "Test Integration"
+    ],
+    "maintainers": [
+        "cash-payments"
+    ],
+    "topics": [
+        "github-action",
+        "nodejs"
+    ]
+}
