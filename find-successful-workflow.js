@@ -104,6 +104,9 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
+  process.stdout.write('\n');
+  process.stdout.write(`Found '${shas.lenght} runs'\n`);
+
   return await findExistingCommit(shas);
 }
 
