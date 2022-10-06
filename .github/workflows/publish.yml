@@ -1,15 +1,15 @@
-name: "Publish"
-on:
-  push:
-    branches:
-      - main
+# name: "Publish"
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+# jobs:
+#   publish:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
 
-      - uses: jameshenry/publish-shell-action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+#       - uses: jameshenry/publish-shell-action@v1
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}

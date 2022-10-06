@@ -63,7 +63,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: ./
         with:
-          main-branch-name: ${{ github.ref_name }}
+          main-branch-name: null
       - name: Verify default Push Workflow
         if: github.event_name != 'pull_request'
         shell: bash

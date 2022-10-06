@@ -37,7 +37,7 @@ runs:
     - name: Set base and head SHAs used for nx affected
       id: setSHAs
       shell: bash
-      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} ${{ inputs.main-branch-name }} ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.working-directory }} ${{ inputs.workflow-id }}
+      run: node $GITHUB_ACTION_PATH/dist/index.js ${{ github.token }} "${{ inputs.main-branch-name }}" ${{ inputs.error-on-no-successful-workflow }} ${{ inputs.last-successful-event }} ${{ inputs.working-directory }} ${{ inputs.workflow-id }}
 
     - name: Log base and head SHAs used for nx affected
       shell: bash
