@@ -103,7 +103,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   process.stdout.write('\n');
   process.stdout.write(`Calling GH REST API for getting successful runs with owner ${owner}, repo ${repo}, branch ${branch}, workflowId ${workflow_id} and event ${lastSuccessfulEvent}\n`);
-  const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
+  let shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
     owner,
     repo,
     // on non-push workflow runs we do not have branch property
