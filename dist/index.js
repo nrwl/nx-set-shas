@@ -44922,6 +44922,86 @@ function isWeekday(v) {
 
 /***/ }),
 
+/***/ 1940:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var qs = __nccwpck_require__(1191)
+  , url = __nccwpck_require__(8835)
+  , xtend = __nccwpck_require__(1208);
+
+const PARSE_LINK_HEADER_MAXLEN = parseInt(process.env.PARSE_LINK_HEADER_MAXLEN) || 2000;
+const PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED = process.env.PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED != null
+
+function hasRel(x) {
+  return x && x.rel;
+}
+
+function intoRels (acc, x) {
+  function splitRel (rel) {
+    acc[rel] = xtend(x, { rel: rel });
+  }
+
+  x.rel.split(/\s+/).forEach(splitRel);
+
+  return acc;
+}
+
+function createObjects (acc, p) {
+  // rel="next" => 1: rel 2: next
+  var m = p.match(/\s*(.+)\s*=\s*"?([^"]+)"?/)
+  if (m) acc[m[1]] = m[2];
+  return acc;
+}
+
+function parseLink(link) {
+  try {
+    var m         =  link.match(/<?([^>]*)>(.*)/)
+      , linkUrl   =  m[1]
+      , parts     =  m[2].split(';')
+      , parsedUrl =  url.parse(linkUrl)
+      , qry       =  qs.parse(parsedUrl.query);
+
+    parts.shift();
+
+    var info = parts
+      .reduce(createObjects, {});
+    
+    info = xtend(qry, info);
+    info.url = linkUrl;
+    return info;
+  } catch (e) {
+    return null;
+  }
+}
+
+function checkHeader(linkHeader){
+  if (!linkHeader) return false;
+
+  if (linkHeader.length > PARSE_LINK_HEADER_MAXLEN) {
+    if (PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED) {
+      throw new Error('Input string too long, it should be under ' + PARSE_LINK_HEADER_MAXLEN + ' characters.');
+    } else {
+        return false;
+      }
+  }
+  return true;
+}
+
+module.exports = function (linkHeader) {
+  if (!checkHeader(linkHeader)) return null;
+
+  return linkHeader.split(/,\s*</)
+   .map(parseLink)
+   .filter(hasRel)
+   .reduce(intoRels, {});
+};
+
+
+/***/ }),
+
 /***/ 7367:
 /***/ ((module, exports, __nccwpck_require__) => {
 
@@ -63912,6 +63992,32 @@ XRegExp = XRegExp || (function (undef) {
 
 /***/ }),
 
+/***/ 1208:
+/***/ ((module) => {
+
+module.exports = extend
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
+    }
+
+    return target
+}
+
+
+/***/ }),
+
 /***/ 4091:
 /***/ ((module) => {
 
@@ -64602,6 +64708,14 @@ module.exports = require("punycode");
 
 /***/ }),
 
+/***/ 1191:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("querystring");
+
+/***/ }),
+
 /***/ 2413:
 /***/ ((module) => {
 
@@ -64712,14 +64826,16 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const { execSync } = __nccwpck_require__(3129);
 const { existsSync } = __nccwpck_require__(5747);
+const parse = __nccwpck_require__(1940);
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3] || undefined;
+const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
+const usesTags = process.argv[8];
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA;
@@ -64742,6 +64858,11 @@ let BASE_SHA;
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
     } catch (e) {
       core.setFailed(e.message);
+      return;
+    }
+
+    if (!BASE_SHA && !mainBranchName) {
+      reportFailure(mainBranchName);
       return;
     }
 
@@ -64796,22 +64917,45 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
       owner,
       repo,
-      branch,
+      branch: usesTags ? undefined : branch,
       run_id
     }).then(({ data: { workflow_id } }) => workflow_id);
     process.stdout.write('\n');
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
   }
   // fetch all workflow runs on a given repo/branch/workflow with push and success
+  process.stdout.write('\n');
+  process.stdout.write(`Calling GH REST API for getting successful runs with owner ${owner}, repo ${repo}, branch ${branch}, workflowId ${workflow_id} and event ${lastSuccessfulEvent}\n`);
   const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
     owner,
     repo,
     // on non-push workflow runs we do not have branch property
-    branch: lastSuccessfulEvent !== 'push' ? undefined : branch,
+    branch: (lastSuccessfulEvent !== 'push') || usesTags ? undefined : branch,
     workflow_id,
     event: lastSuccessfulEvent,
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
+
+  process.stdout.write('\n');
+  process.stdout.write(`Found ${shas.length} shas\n`);
+
+  // get very first commit
+  if (!shas.length) {
+    let commits = await octokit.request(`GET /repos/${owner}/${repo}/commits`, {
+      per_page: 1,
+    });
+    const links = parse(commits.headers.link);
+    commits = await octokit.request(`GET /repos/${owner}/${repo}/commits`, {
+      per_page: links.last.per_page,
+      page: links.last.page
+    });
+    commits = commits.data;
+    const lastCommit = commits[0];
+    shas = [lastCommit.sha];
+  }
+
+  process.stdout.write('\n');
+  process.stdout.write(`Found ${shas.length} shas\n`);
 
   return await findExistingCommit(shas);
 }
@@ -64824,9 +64968,15 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
 async function findExistingCommit(shas) {
   for (const commitSha of shas) {
     if (await commitExists(commitSha)) {
+      process.stdout.write('\n');
+      process.stdout.write(`Found existing commit ${commitSha}\n`);
       return commitSha;
     }
   }
+
+  process.stdout.write('\n');
+  process.stdout.write(`No existing commit found\n`);
+
   return undefined;
 }
 
@@ -64838,8 +64988,12 @@ async function findExistingCommit(shas) {
 async function commitExists(commitSha) {
   try {
     execSync(`git cat-file -e ${commitSha}`, { stdio: ['pipe', 'pipe', null] });
+    process.stdout.write('\n');
+    process.stdout.write(`commit ${commitSha} exits!\n`);
     return true;
   } catch {
+    process.stdout.write('\n');
+    process.stdout.write(`commit ${commitSha} does not exist!\n`);
     return false;
   }
 }

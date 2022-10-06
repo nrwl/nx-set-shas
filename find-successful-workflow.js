@@ -3,14 +3,16 @@ const core = require("@actions/core");
 const github = require('@actions/github');
 const { execSync } = require('child_process');
 const { existsSync } = require('fs');
+const parse = require('parse-link-header');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3] || undefined;
+const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
+const usesTags = process.argv[8];
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA;
@@ -33,6 +35,11 @@ let BASE_SHA;
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
     } catch (e) {
       core.setFailed(e.message);
+      return;
+    }
+
+    if (!BASE_SHA && !mainBranchName) {
+      reportFailure(mainBranchName);
       return;
     }
 
@@ -87,7 +94,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
       owner,
       repo,
-      branch,
+      branch: usesTags ? undefined : branch,
       run_id
     }).then(({ data: { workflow_id } }) => workflow_id);
     process.stdout.write('\n');
@@ -100,11 +107,29 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     owner,
     repo,
     // on non-push workflow runs we do not have branch property
-    branch: lastSuccessfulEvent !== 'push' ? undefined : branch,
+    branch: (lastSuccessfulEvent !== 'push') || usesTags ? undefined : branch,
     workflow_id,
     event: lastSuccessfulEvent,
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
+
+  process.stdout.write('\n');
+  process.stdout.write(`Found ${shas.length} shas\n`);
+
+  // get very first commit
+  if (!shas.length) {
+    let commits = await octokit.request(`GET /repos/${owner}/${repo}/commits`, {
+      per_page: 1,
+    });
+    const links = parse(commits.headers.link);
+    commits = await octokit.request(`GET /repos/${owner}/${repo}/commits`, {
+      per_page: links.last.per_page,
+      page: links.last.page
+    });
+    commits = commits.data;
+    const lastCommit = commits[0];
+    shas = [lastCommit.sha];
+  }
 
   process.stdout.write('\n');
   process.stdout.write(`Found ${shas.length} shas\n`);
