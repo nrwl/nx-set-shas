@@ -64715,7 +64715,7 @@ const { existsSync } = __nccwpck_require__(5747);
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3];
+const mainBranchName = process.argv[3] || undefined;
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
