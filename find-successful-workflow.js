@@ -105,7 +105,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
   process.stdout.write('\n');
-  process.stdout.write(`Found '${shas.lenght} runs'\n`);
+  process.stdout.write(`Found ${shas.length} shas\n`);
 
   return await findExistingCommit(shas);
 }
@@ -118,9 +118,15 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
 async function findExistingCommit(shas) {
   for (const commitSha of shas) {
     if (await commitExists(commitSha)) {
+      process.stdout.write('\n');
+      process.stdout.write(`Found existing commit ${commitSha}\n`);
       return commitSha;
     }
   }
+
+  process.stdout.write('\n');
+  process.stdout.write(`No existing commit found\n`);
+
   return undefined;
 }
 
@@ -132,8 +138,12 @@ async function findExistingCommit(shas) {
 async function commitExists(commitSha) {
   try {
     execSync(`git cat-file -e ${commitSha}`, { stdio: ['pipe', 'pipe', null] });
+    process.stdout.write('\n');
+    process.stdout.write(`commit ${commitSha} exits!\n`);
     return true;
   } catch {
+    process.stdout.write('\n');
+    process.stdout.write(`commit ${commitSha} does not exist!\n`);
     return false;
   }
 }
