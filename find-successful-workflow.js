@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 const { existsSync } = require('fs');
 const parse = require('parse-link-header');
 
-const { repo: { repo, owner }, eventName, refType, workflow } = github.context;
+const { repo: { repo, owner }, eventName, ref, workflow } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
@@ -26,7 +26,7 @@ process.stdout.write(`
   workflowId: ${workflowId}\n
   repo: ${repo}\n
   owner: ${owner}\n
-  refType: ${refType}\n
+  refType: ${ref}\n
   eventName: ${eventName}\n
 `);
 
