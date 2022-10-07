@@ -5,13 +5,13 @@ const { execSync } = require('child_process');
 const { existsSync } = require('fs');
 const parse = require('parse-link-header');
 
-const { repo: { repo, owner }, eventName, ref, workflow } = github.context;
+const { repo: { repo, owner }, eventName, workflow } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
 const mainBranchName = process.argv[3];
 const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
-const workflowId = process.argv[7] || workflow;
+const workflowId = process.argv[7] || workflow.split('/').pop();
 const defaultWorkingDirectory = '.';
 const refType = process.env.GITHUB_REF_TYPE;
 
@@ -27,7 +27,6 @@ process.stdout.write(`
   workflowId: ${workflowId}\n
   repo: ${repo}\n
   owner: ${owner}\n
-  ref: ${ref}\n
   refType: ${refType}\n
   eventName: ${eventName}\n
 `);
