@@ -49,7 +49,7 @@ let BASE_SHA;
   } else {
     try {
       // we only have a branch name on workflows of type "push" and refType "branch"
-      BASE_SHA = await findSuccessfulCommit(isBranchPush() ? mainBranchName : null);
+      BASE_SHA = await findSuccessfulCommit(isBranchPush() ? mainBranchName : undefined);
     } catch (e) {
       core.setFailed(e.message);
       return;
