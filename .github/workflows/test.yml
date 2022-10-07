@@ -61,15 +61,29 @@ jobs:
           node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
 
       - name: Test default Push Workflow
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref_type == 'branch'
         uses: ./
         with:
           main-branch-name: main
       - name: Verify default Push Workflow
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref_type == 'branch'
         shell: bash
         run: |
-          BASE_SHA=$(echo $(git rev-parse HEAD~1))
+          BASE_SHA=$(echo d6354fca6f625dafeeabf4edb0a32d62b0c72bf1)
+          HEAD_SHA=$(echo $(git rev-parse HEAD))
+          node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
+          node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
+
+      - name: Test default Push Workflow with Tag
+        if: github.event_name != 'pull_request' && github.ref_type == 'tag'
+        uses: ./
+        with:
+          main-branch-name: main
+      - name: Verify default Push Workflow with Tag
+        if: github.event_name != 'pull_request' && github.ref_type == 'tag'
+        shell: bash
+        run: |
+          BASE_SHA=$(echo d6354fca6f625dafeeabf4edb0a32d62b0c72bf1)
           HEAD_SHA=$(echo $(git rev-parse HEAD))
           node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
           node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
