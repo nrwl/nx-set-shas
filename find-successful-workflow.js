@@ -177,6 +177,6 @@ async function getOldestCommitSha() {
   return oldestCommit.sha;
 }
 
-function isBranchPush(eventType, refType) {
-  return (eventType === "push" && refType === "branch");
+function isBranchPush() {
+  return (eventName === "push" && refType === "branch");
 }
