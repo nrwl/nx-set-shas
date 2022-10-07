@@ -14,9 +14,9 @@ const workingDirectory = process.argv[6];
 const workflowId = process.argv[7] || workflow;
 const defaultWorkingDirectory = '.';
 
-rocess.stdout.write('\n');
+process.stdout.write('\n');
 process.stdout.write(`Starting..\n`)
-rocess.stdout.write('\n');
+process.stdout.write('\n');
 process.stdout.write(`
   passed args to workflow:\n
   mainBranchName: ${mainBranchName}\n
@@ -24,6 +24,10 @@ process.stdout.write(`
   lastSuccessfulEvent: ${lastSuccessfulEvent}\n
   workingDirectory: ${workingDirectory}\n
   workflowId: ${workflowId}\n
+  repo: ${repo}\n
+  owner: ${owner}\n
+  refType: ${refType}\n
+  eventName: ${eventName}\n
 `);
 
 let BASE_SHA;
