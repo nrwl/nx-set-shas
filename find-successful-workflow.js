@@ -42,6 +42,7 @@ let BASE_SHA;
     }
   }
 
+  const refName = isBranchPush() ? "origin/" + mainBranchName : workflowId;
   const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
 
   if (eventName === 'pull_request') {
@@ -55,18 +56,10 @@ let BASE_SHA;
       return;
     }
 
-    const refName = isBranchPush() ? "origin/" + mainBranchName : workflowId;
-    if (BASE_SHA) {
-      process.stdout.write('\n');
-      process.stdout.write(`Found the last successful workflow run on ${refName}\n`);
-      process.stdout.write(`Commit: ${BASE_SHA}\n`);
-      return;
-    }
-
-    if (errorOnNoSuccessfulWorkflow === 'true') {
+    if (!BASE_SHA && (errorOnNoSuccessfulWorkflow === 'true')) {
       reportFailure(mainBranchName);
       return;
-    } else {
+    } else if (!BASE_SHA) {
       process.stdout.write('\n');
       process.stdout.write(`WARNING: Unable to find a successful workflow run on ${refName}\n`);
       process.stdout.write(`We are therefore defaulting to use HEAD~1 on ${refName}\n`);
@@ -76,6 +69,10 @@ let BASE_SHA;
       BASE_SHA = execSync(`git rev-parse ${isBranchPush() ? "origin/" + mainBranchName : HEAD_SHA}~1`, { encoding: 'utf-8' });
       core.setOutput('noPreviousBuild', 'true');
       process.stdout.write('\n');
+      process.stdout.write(`Commit: ${BASE_SHA}\n`);
+    } else {
+      process.stdout.write('\n');
+      process.stdout.write(`Found the last successful workflow run on ${refName}\n`);
       process.stdout.write(`Commit: ${BASE_SHA}\n`);
     }
   }
