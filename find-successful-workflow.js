@@ -13,6 +13,7 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7] || workflow;
 const defaultWorkingDirectory = '.';
+const refType = process.env.GITHUB_REF_TYPE;
 
 process.stdout.write('\n');
 process.stdout.write(`Starting..\n`)
@@ -26,7 +27,8 @@ process.stdout.write(`
   workflowId: ${workflowId}\n
   repo: ${repo}\n
   owner: ${owner}\n
-  refType: ${ref}\n
+  ref: ${ref}\n
+  refType: ${refType}\n
   eventName: ${eventName}\n
 `);
 
