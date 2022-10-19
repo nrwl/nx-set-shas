@@ -108,9 +108,9 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
       branch = undefined
   }
 
-  process.stdout.write(`useTag: ${useTag}`);
-  process.stdout.write(`lastSuccessfulEvent: ${lastSuccessfulEvent}`);
-  process.stdout.write(`branch: ${branch}`);
+  process.stdout.write(`useTag: ${useTag}\n`);
+  process.stdout.write(`lastSuccessfulEvent: ${lastSuccessfulEvent}\n`);
+  process.stdout.write(`branch: ${branch}\n`);
 
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
@@ -124,7 +124,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
-  process.stdout.write(`shas: ${shas}`);
+  process.stdout.write(`shas: ${shas}\n`);
   return await findExistingCommit(shas);
 }
 
