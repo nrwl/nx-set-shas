@@ -19,7 +19,9 @@ inputs:
     default: "."
   workflow-id:
     description: "The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow"
-
+  use-tag: 
+    description: "Instead of detect changes on branch, now you are able to detect changes by tags and deploy using tag"
+    default: "false"
 outputs:
   base:
     description: The value intended for use with --base or NX_BASE in all subsequent `nx affected` commands within the current workflow
