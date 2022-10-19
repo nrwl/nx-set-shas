@@ -64720,7 +64720,11 @@ const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
-const useTag = process.argv[8];
+// we cannot set userTag as process.argv[8] due to workflowId can be undefined, 
+// then userTag will be taken as argb[7]
+// so we have to take use-tag variable from core.getInput
+// const useTag = process.argv[8];
+const useTag = core.getInput('use-tag');
 const defaultWorkingDirectory = '.';
 
 process.stdout.write(`process.argv: ${JSON.stringify(process.argv)}\n`)
