@@ -22,7 +22,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         name: Checkout [Push]
-        if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
 

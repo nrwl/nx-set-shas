@@ -64720,9 +64720,12 @@ const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
+const useTag = process.argv[8];
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA;
+let HEAD_SHA;
+
 (async () => {
   if (workingDirectory !== defaultWorkingDirectory) {
     if (existsSync(workingDirectory)) {
@@ -64733,7 +64736,13 @@ let BASE_SHA;
     }
   }
 
-  const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
+  // in case use tag, we get latest tag's commit id to compare with latest success workflow commit id
+  if (useTag === 'true') {
+    HEAD_SHA = execSync('git rev-list -n 1 `git describe --tags --abbrev=0`', { encoding: 'utf-8' });
+  } else {
+    // otherwise, get HEAD
+    HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
+  }
 
   if (eventName === 'pull_request') {
     BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
@@ -64802,14 +64811,23 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     process.stdout.write('\n');
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
   }
+
+  // tag don't have branch attached with it
+  if(useTag === 'true' || lastSuccessfulEvent !== 'push') {
+      branch = undefined
+  }
+
+  process.stdout.write(`branch: ${branch}`);
+  
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
     owner,
     repo,
     // on non-push workflow runs we do not have branch property
-    branch: lastSuccessfulEvent !== 'push' ? undefined : branch,
+    branch: branch, // lastSuccessfulEvent !== 'push' ? undefined : branch
     workflow_id,
-    event: lastSuccessfulEvent,
+    // on tag, event always be 'push' and branch is always empty
+    event: useTag ? undefined : lastSuccessfulEvent,
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
