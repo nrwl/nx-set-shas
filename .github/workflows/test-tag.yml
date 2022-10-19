@@ -1,0 +1,51 @@
+name: "Test"
+
+on:
+  push:
+    tags:
+      - v0*
+      - v1*
+      - v2*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test Tag
+    strategy:
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [Push]
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          fetch-depth: 0
+
+      - name: Set Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run build
+
+      - name: Test tag Workflow
+        uses: ./
+        with:
+          main-branch-name: ${{ github.ref_name }}
+          use-tag: true
+      - name: Verify tag Push Workflow
+        shell: bash
+        run: |
+          BASE_SHA=$(echo $(git rev-parse $(git describe --abbrev=0 --tags $(git describe --tags --abbrev=0)^)))
+          HEAD_SHA=$(echo $(git rev-list -n 1 `git describe --tags --abbrev=0`))
+          node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
+          node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
