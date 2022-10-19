@@ -14,6 +14,8 @@ const workflowId = process.argv[7];
 const useTag = process.argv[8];
 const defaultWorkingDirectory = '.';
 
+process.stdout.write(`process.argv: ${JSON.stringify(process.argv)}\n`)
+
 let BASE_SHA;
 let HEAD_SHA;
 
@@ -56,7 +58,7 @@ let HEAD_SHA;
         process.stdout.write('\n');
         process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
-        BASE_SHA = execSync(`git rev-parse origin/${mainBranchName}~1`, { encoding: 'utf-8' });
+        BASE_SHA = execSync(`git rev-parse ${mainBranchName}~1`, { encoding: 'utf-8' });
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
@@ -108,6 +110,8 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
       branch = undefined
   }
 
+  process.stdout.write(`owner: ${owner}\n`);
+  process.stdout.write(`repo: ${repo}\n`);
   process.stdout.write(`useTag: ${useTag}\n`);
   process.stdout.write(`lastSuccessfulEvent: ${lastSuccessfulEvent}\n`);
   process.stdout.write(`branch: ${branch}\n`);
