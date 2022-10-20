@@ -7,7 +7,9 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 
 - [Example Usage](#example-usage)
 - [Configuration Options](#configuration-options)
+- [Permissions in v2+](#permissions-in-v2)
 - [Background](#background)
+  - [Problem](#problem)
 - [License](#license)
 
 **NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
@@ -94,6 +96,11 @@ jobs:
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
     workflow-id: ''
+
+    # Now you are able to use tag to mark product deployment. Set it to 'true' if you would to use tag deployment and remember set last-successful-event to 'push', either it won't work
+    #
+    # Default: 'false'
+    use-tag: ''
 ```
 <!-- end configuration-options -->
 
