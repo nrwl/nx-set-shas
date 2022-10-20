@@ -64744,7 +64744,7 @@ let HEAD_SHA;
 
   // in case use tag, we get latest tag's commit id to compare with latest success workflow commit id
   if (useTag === 'true') {
-    HEAD_SHA = execSync('git rev-parse `git describe --tags --abbrev=0`', { encoding: 'utf-8' });
+    HEAD_SHA = execSync(`git rev-parse ${mainBranchName}`, { encoding: 'utf-8' });
   } else {
     // otherwise, get HEAD
     HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
