@@ -114,6 +114,12 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
       branch = undefined
   }
 
+  // during gitlab-ci, data for latest tag does not exist yet. 
+  // so we have use previous tag
+  if (useTag === 'true' && lastSuccessfulEvent === 'push') {
+    branch = execSync(`git describe --abbrev=0 --tag ${branch}^`)
+  }
+
   process.stdout.write(`owner: ${owner}\n`);
   process.stdout.write(`repo: ${repo}\n`);
   process.stdout.write(`useTag: ${useTag}\n`);
