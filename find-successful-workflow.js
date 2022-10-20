@@ -18,7 +18,7 @@ const workflowId = process.argv[8];
 // const useTag = core.getInput('use-tag');
 const defaultWorkingDirectory = '.';
 
-process.stdout.write(`process.argv: ${JSON.stringify(process.argv)}\n`)
+process.stdout.write(`core.getInput.use-tag: ${core.getInput('use-tag')}\n`)
 
 let BASE_SHA;
 let HEAD_SHA;
@@ -110,7 +110,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   }
 
   // tag don't have branch attached with it
-  if(useTag === 'true' || lastSuccessfulEvent !== 'push') {
+  if(lastSuccessfulEvent !== 'push') { // useTag === 'true' || 
       branch = undefined
   }
 
@@ -128,7 +128,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     // on non-push workflow runs we do not have branch property
     branch: branch, // lastSuccessfulEvent !== 'push' ? undefined : branch
     // on tag, event always be 'push' and branch is always empty
-    event: useTag ? undefined : lastSuccessfulEvent,
+    event: lastSuccessfulEvent,
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
