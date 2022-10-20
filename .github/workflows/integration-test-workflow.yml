@@ -51,11 +51,3 @@ jobs:
           HEAD_SHA=$(git rev-parse HEAD)
           node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
           node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
-
-      - name: Verify default Push Workflow
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          BASE_SHA=$(echo $(git rev-parse HEAD~1))
-          HEAD_SHA=$(echo $(git rev-parse HEAD))
-          node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
-          node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
