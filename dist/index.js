@@ -64727,8 +64727,6 @@ const workflowId = process.argv[8];
 // const useTag = core.getInput('use-tag');
 const defaultWorkingDirectory = '.';
 
-process.stdout.write(`core.getInput.use-tag: ${core.getInput('use-tag')}\n`)
-
 let BASE_SHA;
 let HEAD_SHA;
 
@@ -64823,10 +64821,10 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
       branch = undefined
   }
 
-  // during gitlab-ci, data for latest tag does not exist yet. 
-  // so we have use previous tag
+  // during gitlab-ci for tag, branch does not required yet, unless you would check for special tag
   if (useTag === 'true' && lastSuccessfulEvent === 'push') {
-    branch = execSync(`git describe --abbrev=0 --tag ${branch}^`)
+    // branch = execSync(`git describe --abbrev=0 --tag ${branch}^`)
+    branch = undefined
   }
 
   process.stdout.write(`owner: ${owner}\n`);
