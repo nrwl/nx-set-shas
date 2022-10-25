@@ -1,9 +1,6 @@
-name: "Test"
+name: "Workflow test"
 
 on:
-  push:
-    paths-ignore:
-      - "**.md"
   pull_request:
     paths-ignore:
       - "**.md"

@@ -1,9 +1,6 @@
-name: "Test Integration"
+name: "Workflow Integration Test"
 
 on:
-  push:
-    paths-ignore:
-      - "**.md"
   pull_request:
     paths-ignore:
       - "**.md"
@@ -13,10 +10,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test workflow integration
-    uses: ./.github/workflows/integration-test-workflow.yml
-    with:
-      working-directory: integration-test
-      main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
-      runs-on: ubuntu-latest
+  test_integration:
+    name: Test Integration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [Pull Request]
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          # By default, PRs will be checked-out based on the Merge Commit, but we want the actual branch HEAD.
+          ref: ${{ github.event.pull_request.head.sha }}
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0
+
+      - uses: actions/checkout@v2
+        name: Checkout [Default Branch]
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0
+
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: ./
+        with:
+          main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+
+      - name: Verify default PR Workflow
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          BASE_SHA=$(echo $(git merge-base origin/${{github.base_ref}} HEAD))
+          HEAD_SHA=$(git rev-parse HEAD)
+          node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
+          node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
+
+      - name: Verify default Push Workflow
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          BASE_SHA=$(echo $(git rev-parse HEAD~1))
+          HEAD_SHA=$(echo $(git rev-parse HEAD))
+          node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
+          node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
