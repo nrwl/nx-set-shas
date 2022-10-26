@@ -20,7 +20,7 @@
     "@octokit/action": "^3.18.1"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.29.0",
+    "@vercel/ncc": "^0.34.0",
     "chalk": "^4.1.2",
     "husky": "^8.0.1",
     "is-ci": "^3.0.1"
