@@ -16,8 +16,8 @@
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@actions/github": "^5.0.0",
-    "@octokit/action": "^3.18.1"
+    "@actions/github": "^5.1.1",
+    "@octokit/action": "^4.0.10"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.34.0",
