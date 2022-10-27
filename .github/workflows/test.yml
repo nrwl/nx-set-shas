@@ -21,14 +21,14 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.runs-on }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [Pull Request]
         if: ${{ github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [Push]
         if: ${{ github.event_name != 'pull_request' }}
         with:
