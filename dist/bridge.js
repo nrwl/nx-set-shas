@@ -1,11 +1,4 @@
-/******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
-
-/***/ 989:
-/***/ ((__unused_webpack_module, exports) => {
-
-
+'use strict';
 
 /**
  * __        ___    ____  _   _ ___ _   _  ____
@@ -1005,24 +998,3 @@ function createBridge(otherInit, registerProxy) {
 
 exports.createBridge = createBridge;
 exports.VMError = VMError;
-
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat */
-/******/ 	
-/******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
-/************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = {};
-/******/ 	__webpack_modules__[989](0, __webpack_exports__);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
-/******/ })()
-;
