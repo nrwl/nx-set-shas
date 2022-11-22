@@ -13738,6 +13738,7 @@ let BASE_SHA;
     BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
   } else {
     try {
+      process.stdout.write(`Calling findSuccessfulCommit with workflowId: ${workflowId}, runId: ${runId}, owner: ${owner}, repo: ${repo}, mainBranchName: ${mainBranchName}, lastSuccessfulEvent: ${lastSuccessfulEvent}\n`);
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
     } catch (e) {
       core.setFailed(e.message);
@@ -13812,6 +13813,8 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
     status: 'success'
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
+  process.stdout.write(`shas '${shas}'\n`);
+
   return await findExistingCommit(shas);
 }
 
@@ -13822,6 +13825,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
  */
 async function findExistingCommit(shas) {
   for (const commitSha of shas) {
+    process.stdout.write(`sha ${commitSha}'\n`);
     if (await commitExists(commitSha)) {
       return commitSha;
     }
