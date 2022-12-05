@@ -10,7 +10,7 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 - [Background](#background)
 - [License](#license)
 
-**NOTE:** This documentation is for version `2.x.x+` and `3.x.x` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
+**NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
 
 ## Example Usage
 
