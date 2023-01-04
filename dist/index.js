@@ -14064,6 +14064,7 @@ async function commitExists(commitSha) {
 function stripNewLineEndings(string) {
   return string.replace('\n', '');
 }
+
 })();
 
 module.exports = __webpack_exports__;
