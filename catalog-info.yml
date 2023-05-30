@@ -10,4 +10,4 @@ metadata:
 spec:
   type: other
   lifecycle: experimental
-  owner: cash-payments
+  owner: cash-data
