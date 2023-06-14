@@ -26,7 +26,7 @@ let BASE_SHA;
 
   const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
 
-  if (eventName === 'pull_request') {
+  if (eventName === 'pull_request' && !github.context.payload.pull_request.merged) {
     BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
   } else {
     try {
