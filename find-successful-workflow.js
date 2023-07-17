@@ -1,7 +1,7 @@
 const { Octokit } = require("@octokit/action");
 const core = require("@actions/core");
 const github = require('@actions/github');
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const { existsSync } = require('fs');
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
@@ -24,10 +24,13 @@ let BASE_SHA;
     }
   }
 
-  const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
+  const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
+  const HEAD_SHA = headResult.stdout;
+
 
   if (eventName === 'pull_request') {
-    BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
+    const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
+    BASE_SHA = baseResult.stdout;
   } else {
     try {
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
@@ -47,7 +50,9 @@ let BASE_SHA;
         process.stdout.write('\n');
         process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
-        BASE_SHA = execSync(`git rev-parse origin/${mainBranchName}~1`, { encoding: 'utf-8' });
+        const baseRes = spawnSync('git', ['rev-parse', `origin/${mainBranchName}~1`], { encoding: 'utf-8' });
+        BASE_SHA = baseRes.stdout;
+
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
@@ -128,7 +133,7 @@ async function findExistingCommit(shas) {
  */
 async function commitExists(commitSha) {
   try {
-    execSync(`git cat-file -e ${commitSha}`, { stdio: ['pipe', 'pipe', null] });
+    spawnSync('git', ['cat-file', '-e', commitSha], { stdio: ['pipe', 'pipe', null] });
     return true;
   } catch {
     return false;
