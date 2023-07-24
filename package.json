@@ -3,6 +3,7 @@
   "version": "4.0.1",
   "license": "MIT",
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
+  "name": "actions-nx-set-shas",
   "scripts": {
     "build": "ncc build find-successful-workflow.ts --license licenses.txt",
     "prepare": "is-ci || husky install"
