@@ -13945,7 +13945,7 @@ let BASE_SHA;
 
   if (['pull_request', 'pull_request_target', 'merge_queue'].includes(eventName) && !github.context.payload.pull_request.merged) {
     try {
-      const mergeBaseRef = findMergeBaseRef();
+      const mergeBaseRef = await findMergeBaseRef();
       const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
       BASE_SHA = baseResult.stdout;
     } catch (e) {
