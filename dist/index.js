@@ -14049,8 +14049,11 @@ async function findMergeQueueBranch(owner, repo, mainBranchName) {
   if (!pull_number) {
     throw new Error('Failed to determine PR number')
   }
+  process.stdout.write('\n');
+  process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
   const octokit = new Octokit();
   const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number });
+  process.stdout.write(`Found PR #${pull_number} branch ref: ${result.data.head.ref}\n`);
   return result.data.head.ref;
 }
 
