@@ -13943,13 +13943,10 @@ let BASE_SHA;
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
   const HEAD_SHA = headResult.stdout;
 
-  if (['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
-    const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
-    BASE_SHA = baseResult.stdout;
-  } else if (eventName == 'merge_queue' && !github.context.payload.pull_request.merged) {
+  if (['pull_request', 'pull_request_target', 'merge_queue'].includes(eventName) && !github.context.payload.pull_request.merged) {
     try {
-      const prBranch = await findMergeQueueBranch(owner, repo, mainBranchName);
-      const baseResult = spawnSync('git', ['merge-base', `origin/${prBranch}`, `origin/${mainBranchName}`], { encoding: 'utf-8' });
+      const mergeBaseRef = findMergeBaseRef();
+      const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
       BASE_SHA = baseResult.stdout;
     } catch (e) {
       core.setFailed(e.message);
@@ -14038,13 +14035,21 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   return await findExistingCommit(shas);
 }
 
-function findMergeQueuePr(mainBranchName) {
+async function findMergeBaseRef() {
+  if (eventName == 'merge_queue') {
+    return await findMergeQueueBranch(owner, repo, mainBranchName);
+  } else {
+    return 'HEAD'
+  }
+}
+
+function findMergeQueuePr() {
   const { head_ref, base_sha } = github.context.payload.merge_group;
   const result = new RegExp(`^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`).exec(head_ref);
   return result ? result.at(1) : undefined;
 }
 
-async function findMergeQueueBranch(owner, repo, mainBranchName) {
+async function findMergeQueueBranch() {
   const pull_number = findMergeQueuePr(mainBranchName);
   if (!pull_number) {
     throw new Error('Failed to determine PR number')
@@ -14053,7 +14058,6 @@ async function findMergeQueueBranch(owner, repo, mainBranchName) {
   process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
   const octokit = new Octokit();
   const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number });
-  process.stdout.write(`Found PR #${pull_number} branch ref: ${result.data.head.ref}\n`);
   return result.data.head.ref;
 }
 
