@@ -27,7 +27,7 @@ let BASE_SHA;
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
   const HEAD_SHA = headResult.stdout;
 
-  if (['pull_request', 'pull_request_target', 'merge_queue'].includes(eventName) && !github.context.payload.pull_request.merged) {
+  if (['pull_request', 'pull_request_target', 'merge_group'].includes(eventName) && !github.context.payload.pull_request.merged) {
     try {
       const mergeBaseRef = await findMergeBaseRef();
       const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
@@ -120,7 +120,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
 }
 
 async function findMergeBaseRef() {
-  if (eventName == 'merge_queue') {
+  if (eventName == 'merge_group') {
     return await findMergeQueueBranch(owner, repo, mainBranchName);
   } else {
     return 'HEAD'
