@@ -14037,7 +14037,8 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
 
 async function findMergeBaseRef() {
   if (eventName == 'merge_group') {
-    return await findMergeQueueBranch(owner, repo, mainBranchName);
+    const mergeQueueBranch = await findMergeQueueBranch(owner, repo, mainBranchName);
+    return `origin/${mergeQueueBranch}`;
   } else {
     return 'HEAD'
   }
