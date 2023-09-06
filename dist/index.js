@@ -13709,7 +13709,7 @@ var __webpack_exports__ = {};
 const { Octokit } = __nccwpck_require__(1231);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
-const { execSync } = __nccwpck_require__(2081);
+const { spawnSync } = __nccwpck_require__(2081);
 const { existsSync } = __nccwpck_require__(7147);
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
@@ -13732,10 +13732,12 @@ let BASE_SHA;
     }
   }
 
-  const HEAD_SHA = execSync(`git rev-parse HEAD`, { encoding: 'utf-8' });
+  const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
+  const HEAD_SHA = headResult.stdout;
 
-  if (eventName === 'pull_request' && !github.context.payload.pull_request.merged) {
-    BASE_SHA = execSync(`git merge-base origin/${mainBranchName} HEAD`, { encoding: 'utf-8' });
+  if (['pull_request','pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
+    const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
+    BASE_SHA = baseResult.stdout;
   } else {
     try {
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
@@ -13755,7 +13757,9 @@ let BASE_SHA;
         process.stdout.write('\n');
         process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
-        BASE_SHA = execSync(`git rev-parse origin/${mainBranchName}~1`, { encoding: 'utf-8' });
+        const baseRes = spawnSync('git', ['rev-parse', `origin/${mainBranchName}~1`], { encoding: 'utf-8' });
+        BASE_SHA = baseRes.stdout;
+
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
@@ -13836,7 +13840,7 @@ async function findExistingCommit(shas) {
  */
 async function commitExists(commitSha) {
   try {
-    execSync(`git cat-file -e ${commitSha}`, { stdio: ['pipe', 'pipe', null] });
+    spawnSync('git', ['cat-file', '-e', commitSha], { stdio: ['pipe', 'pipe', null] });
     return true;
   } catch {
     return false;
