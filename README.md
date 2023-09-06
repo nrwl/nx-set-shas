@@ -113,9 +113,7 @@ jobs:
 
 ## Background
 
-When we run the `affected` command on [Nx](https://nx.dev/), we can specify 2 git history positions - base and head, and it calculates [which projects in your repository changed
-between those 2 commits](https://nx.dev/latest/angular/tutorial/11-test-affected-projects#step-11-test-affected-projects
-). We can then run a set of tasks (like building or linting) only on those **affected** projects.
+When we run the `affected` command on [Nx](https://nx.dev/), we can specify 2 git history positions - base and head, and it calculates which projects in your repository changed between those 2 commits. We can then run a set of tasks (like building or linting) only on those **affected** projects.
 
 This makes it easy to set up a CI system that scales well with the continuous growth of your repository, as you add more and more projects.
 
