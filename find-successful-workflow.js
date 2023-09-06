@@ -28,7 +28,7 @@ let BASE_SHA;
   const HEAD_SHA = headResult.stdout;
 
 
-  if (eventName === 'pull_request') {
+  if (['pull_request','pull_request_target'].includes(eventName)) {
     const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
     BASE_SHA = baseResult.stdout;
   } else {
