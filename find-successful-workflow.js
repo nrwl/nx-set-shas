@@ -27,9 +27,15 @@ let BASE_SHA;
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
   const HEAD_SHA = headResult.stdout;
 
-  if (['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
-    const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
-    BASE_SHA = baseResult.stdout;
+  if (['pull_request', 'pull_request_target', 'merge_group'].includes(eventName) && !github.context.payload.pull_request.merged) {
+    try {
+      const mergeBaseRef = await findMergeBaseRef();
+      const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
+      BASE_SHA = baseResult.stdout;
+    } catch (e) {
+      core.setFailed(e.message);
+      return;
+    }
   } else {
     try {
       BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
@@ -111,6 +117,33 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
   }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
 
   return await findExistingCommit(shas);
+}
+
+async function findMergeBaseRef() {
+  if (eventName == 'merge_group') {
+    const mergeQueueBranch = await findMergeQueueBranch(owner, repo, mainBranchName);
+    return `origin/${mergeQueueBranch}`;
+  } else {
+    return 'HEAD'
+  }
+}
+
+function findMergeQueuePr() {
+  const { head_ref, base_sha } = github.context.payload.merge_group;
+  const result = new RegExp(`^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`).exec(head_ref);
+  return result ? result.at(1) : undefined;
+}
+
+async function findMergeQueueBranch() {
+  const pull_number = findMergeQueuePr(mainBranchName);
+  if (!pull_number) {
+    throw new Error('Failed to determine PR number')
+  }
+  process.stdout.write('\n');
+  process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
+  const octokit = new Octokit();
+  const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number });
+  return result.data.head.ref;
 }
 
 /**
