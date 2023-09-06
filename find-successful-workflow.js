@@ -27,7 +27,7 @@ let BASE_SHA;
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
   const HEAD_SHA = headResult.stdout;
 
-  if (['pull_request','pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
+  if (['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
     const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
     BASE_SHA = baseResult.stdout;
   } else {
@@ -49,9 +49,12 @@ let BASE_SHA;
         process.stdout.write('\n');
         process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
 
-        const baseRes = spawnSync('git', ['rev-parse', `origin/${mainBranchName}~1`], { encoding: 'utf-8' });
-        BASE_SHA = baseRes.stdout;
+        const commitCountOutput = spawnSync('git', ['rev-list', '--count', `origin/${mainBranchName}`], { encoding: 'utf-8' }).stdout;
+        const commitCount = parseInt(stripNewLineEndings(commitCountOutput), 10);
 
+        const LAST_COMMIT_CMD = `origin/${mainBranchName}${commitCount > 1 ? '~1' : ''}`
+        const baseRes = spawnSync('git', ['rev-parse', LAST_COMMIT_CMD], { encoding: 'utf-8' });
+        BASE_SHA = baseRes.stdout;
         core.setOutput('noPreviousBuild', 'true');
       }
     } else {
@@ -59,9 +62,8 @@ let BASE_SHA;
       process.stdout.write(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
       process.stdout.write(`Commit: ${BASE_SHA}\n`);
     }
-  }
 
-  const stripNewLineEndings = sha => sha.replace('\n', '');
+  }
   core.setOutput('base', stripNewLineEndings(BASE_SHA));
   core.setOutput('head', stripNewLineEndings(HEAD_SHA));
 })();
@@ -137,4 +139,12 @@ async function commitExists(commitSha) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Strips LF line endings from given string
+ * @param {string} string
+ */
+function stripNewLineEndings(string) {
+  return string.replace('\n', '');
 }
