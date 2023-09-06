@@ -11,7 +11,7 @@
     "url": "https://github.com/nrwl/nx-set-shas/issues"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
@@ -20,7 +20,7 @@
     "@octokit/action": "^6.0.5"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.34.0",
+    "@vercel/ncc": "^0.36.1",
     "chalk": "^4.1.2",
     "husky": "^8.0.1",
     "is-ci": "^3.0.1"
