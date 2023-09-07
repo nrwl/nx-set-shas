@@ -34,10 +34,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set Node.js 20.x
+      - name: Set Node.js 18.x
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Install
         run: yarn --frozen-lockfile
