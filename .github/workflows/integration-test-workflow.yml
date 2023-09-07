@@ -23,7 +23,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout [Pull Request]
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -32,7 +32,7 @@ jobs:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout [Default Branch]
         if: ${{ github.event_name != 'pull_request' }}
         with:
