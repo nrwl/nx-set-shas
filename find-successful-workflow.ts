@@ -1,8 +1,8 @@
-const { Octokit } = require("@octokit/action");
-const core = require("@actions/core");
-const github = require('@actions/github');
-const { spawnSync } = require('child_process');
-const { existsSync } = require('fs');
+import { Octokit } from '@octokit/action';
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { spawnSync } from 'child_process';
+import { existsSync } from 'fs';
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
@@ -125,7 +125,7 @@ async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, la
 
 async function findMergeBaseRef() {
   if (eventName == 'merge_group') {
-    const mergeQueueBranch = await findMergeQueueBranch(owner, repo, mainBranchName);
+    const mergeQueueBranch = await findMergeQueueBranch();
     return `origin/${mergeQueueBranch}`;
   } else {
     return 'HEAD'
@@ -139,14 +139,14 @@ function findMergeQueuePr() {
 }
 
 async function findMergeQueueBranch() {
-  const pull_number = findMergeQueuePr(mainBranchName);
+  const pull_number = findMergeQueuePr();
   if (!pull_number) {
     throw new Error('Failed to determine PR number')
   }
   process.stdout.write('\n');
   process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
   const octokit = new Octokit();
-  const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number });
+  const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number: +pull_number });
   return result.data.head.ref;
 }
 
