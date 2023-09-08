@@ -14875,6 +14875,210 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 5468:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const action_1 = __nccwpck_require__(1231);
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+const child_process_1 = __nccwpck_require__(2081);
+const fs_1 = __nccwpck_require__(7147);
+const { runId, repo: { repo, owner }, eventName } = github.context;
+process.env.GITHUB_TOKEN = process.argv[2];
+const mainBranchName = process.argv[3];
+const errorOnNoSuccessfulWorkflow = process.argv[4];
+const lastSuccessfulEvent = process.argv[5];
+const workingDirectory = process.argv[6];
+const workflowId = process.argv[7];
+const defaultWorkingDirectory = '.';
+let BASE_SHA;
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    if (workingDirectory !== defaultWorkingDirectory) {
+        if ((0, fs_1.existsSync)(workingDirectory)) {
+            process.chdir(workingDirectory);
+        }
+        else {
+            process.stdout.write('\n');
+            process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
+        }
+    }
+    const headResult = (0, child_process_1.spawnSync)('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
+    const HEAD_SHA = headResult.stdout;
+    if ((['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) ||
+        eventName == 'merge_group') {
+        try {
+            const mergeBaseRef = yield findMergeBaseRef();
+            const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
+            BASE_SHA = baseResult.stdout;
+        }
+        catch (e) {
+            core.setFailed(e.message);
+            return;
+        }
+    }
+    else {
+        try {
+            BASE_SHA = yield findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
+        }
+        catch (e) {
+            core.setFailed(e.message);
+            return;
+        }
+        if (!BASE_SHA) {
+            if (errorOnNoSuccessfulWorkflow === 'true') {
+                reportFailure(mainBranchName);
+                return;
+            }
+            else {
+                process.stdout.write('\n');
+                process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}'\n`);
+                process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
+                process.stdout.write('\n');
+                process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
+                const commitCountOutput = (0, child_process_1.spawnSync)('git', ['rev-list', '--count', `origin/${mainBranchName}`], { encoding: 'utf-8' }).stdout;
+                const commitCount = parseInt(stripNewLineEndings(commitCountOutput), 10);
+                const LAST_COMMIT_CMD = `origin/${mainBranchName}${commitCount > 1 ? '~1' : ''}`;
+                const baseRes = (0, child_process_1.spawnSync)('git', ['rev-parse', LAST_COMMIT_CMD], { encoding: 'utf-8' });
+                BASE_SHA = baseRes.stdout;
+                core.setOutput('noPreviousBuild', 'true');
+            }
+        }
+        else {
+            process.stdout.write('\n');
+            process.stdout.write(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
+            process.stdout.write(`Commit: ${BASE_SHA}\n`);
+        }
+    }
+    core.setOutput('base', stripNewLineEndings(BASE_SHA));
+    core.setOutput('head', stripNewLineEndings(HEAD_SHA));
+}))();
+function reportFailure(branchName) {
+    core.setFailed(`
+    Unable to find a successful workflow run on 'origin/${branchName}'
+    NOTE: You have set 'error-on-no-successful-workflow' on the action so this is a hard error.
+
+    Is it possible that you have no runs currently on 'origin/${branchName}'?
+    - If yes, then you should run the workflow without this flag first.
+    - If no, then you might have changed your git history and those commits no longer exist.`);
+}
+/**
+ * Find last successful workflow run on the repo
+ * @param {string?} workflow_id
+ * @param {number} run_id
+ * @param {string} owner
+ * @param {string} repo
+ * @param {string} branch
+ * @returns
+ */
+function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const octokit = new action_1.Octokit();
+        if (!workflow_id) {
+            workflow_id = yield octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
+                owner,
+                repo,
+                branch,
+                run_id
+            }).then(({ data: { workflow_id } }) => workflow_id);
+            process.stdout.write('\n');
+            process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
+        }
+        // fetch all workflow runs on a given repo/branch/workflow with push and success
+        const shas = yield octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
+            owner,
+            repo,
+            // on non-push workflow runs we do not have branch property
+            branch: lastSuccessfulEvent !== 'push' ? undefined : branch,
+            workflow_id,
+            event: lastSuccessfulEvent,
+            status: 'success'
+        }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
+        return yield findExistingCommit(shas);
+    });
+}
+function findMergeBaseRef() {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (eventName == 'merge_group') {
+            const mergeQueueBranch = yield findMergeQueueBranch();
+            return `origin/${mergeQueueBranch}`;
+        }
+        else {
+            return 'HEAD';
+        }
+    });
+}
+function findMergeQueuePr() {
+    const { head_ref, base_sha } = github.context.payload.merge_group;
+    const result = new RegExp(`^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`).exec(head_ref);
+    return result ? result.at(1) : undefined;
+}
+function findMergeQueueBranch() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pull_number = findMergeQueuePr();
+        if (!pull_number) {
+            throw new Error('Failed to determine PR number');
+        }
+        process.stdout.write('\n');
+        process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
+        const octokit = new action_1.Octokit();
+        const result = yield octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
+        return result.data.head.ref;
+    });
+}
+/**
+ * Get first existing commit
+ * @param {string[]} commit_shas
+ * @returns {string?}
+ */
+function findExistingCommit(shas) {
+    return __awaiter(this, void 0, void 0, function* () {
+        for (const commitSha of shas) {
+            if (yield commitExists(commitSha)) {
+                return commitSha;
+            }
+        }
+        return undefined;
+    });
+}
+/**
+ * Check if given commit is valid
+ * @param {string} commitSha
+ * @returns {boolean}
+ */
+function commitExists(commitSha) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            (0, child_process_1.spawnSync)('git', ['cat-file', '-e', commitSha], { stdio: ['pipe', 'pipe', null] });
+            return true;
+        }
+        catch (_a) {
+            return false;
+        }
+    });
+}
+/**
+ * Strips LF line endings from given string
+ * @param {string} string
+ */
+function stripNewLineEndings(string) {
+    return string.replace('\n', '');
+}
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -15065,199 +15269,12 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-const { Octokit } = __nccwpck_require__(1231);
-const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
-const { spawnSync } = __nccwpck_require__(2081);
-const { existsSync } = __nccwpck_require__(7147);
-
-const { runId, repo: { repo, owner }, eventName } = github.context;
-process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3];
-const errorOnNoSuccessfulWorkflow = process.argv[4];
-const lastSuccessfulEvent = process.argv[5];
-const workingDirectory = process.argv[6];
-const workflowId = process.argv[7];
-const defaultWorkingDirectory = '.';
-
-let BASE_SHA;
-(async () => {
-  if (workingDirectory !== defaultWorkingDirectory) {
-    if (existsSync(workingDirectory)) {
-      process.chdir(workingDirectory);
-    } else {
-      process.stdout.write('\n');
-      process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
-    }
-  }
-
-  const headResult = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' });
-  const HEAD_SHA = headResult.stdout;
-
-
-  if (
-    (['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) ||
-    eventName == 'merge_group'
-  ) {
-    try {
-      const mergeBaseRef = await findMergeBaseRef();
-      const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
-      BASE_SHA = baseResult.stdout;
-    } catch (e) {
-      core.setFailed(e.message);
-      return;
-    }
-  } else {
-    try {
-      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
-    } catch (e) {
-      core.setFailed(e.message);
-      return;
-    }
-
-    if (!BASE_SHA) {
-      if (errorOnNoSuccessfulWorkflow === 'true') {
-        reportFailure(mainBranchName);
-        return;
-      } else {
-        process.stdout.write('\n');
-        process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}'\n`);
-        process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
-        process.stdout.write('\n');
-        process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
-
-        const commitCountOutput = spawnSync('git', ['rev-list', '--count', `origin/${mainBranchName}`], { encoding: 'utf-8' }).stdout;
-        const commitCount = parseInt(stripNewLineEndings(commitCountOutput), 10);
-
-        const LAST_COMMIT_CMD = `origin/${mainBranchName}${commitCount > 1 ? '~1' : ''}`
-        const baseRes = spawnSync('git', ['rev-parse', LAST_COMMIT_CMD], { encoding: 'utf-8' });
-        BASE_SHA = baseRes.stdout;
-        core.setOutput('noPreviousBuild', 'true');
-      }
-    } else {
-      process.stdout.write('\n');
-      process.stdout.write(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
-      process.stdout.write(`Commit: ${BASE_SHA}\n`);
-    }
-
-  }
-  core.setOutput('base', stripNewLineEndings(BASE_SHA));
-  core.setOutput('head', stripNewLineEndings(HEAD_SHA));
-})();
-
-function reportFailure(branchName) {
-  core.setFailed(`
-    Unable to find a successful workflow run on 'origin/${branchName}'
-    NOTE: You have set 'error-on-no-successful-workflow' on the action so this is a hard error.
-
-    Is it possible that you have no runs currently on 'origin/${branchName}'?
-    - If yes, then you should run the workflow without this flag first.
-    - If no, then you might have changed your git history and those commits no longer exist.`);
-}
-
-/**
- * Find last successful workflow run on the repo
- * @param {string?} workflow_id
- * @param {number} run_id
- * @param {string} owner
- * @param {string} repo
- * @param {string} branch
- * @returns
- */
-async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
-  const octokit = new Octokit();
-  if (!workflow_id) {
-    workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
-      owner,
-      repo,
-      branch,
-      run_id
-    }).then(({ data: { workflow_id } }) => workflow_id);
-    process.stdout.write('\n');
-    process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
-  }
-  // fetch all workflow runs on a given repo/branch/workflow with push and success
-  const shas = await octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
-    owner,
-    repo,
-    // on non-push workflow runs we do not have branch property
-    branch: lastSuccessfulEvent !== 'push' ? undefined : branch,
-    workflow_id,
-    event: lastSuccessfulEvent,
-    status: 'success'
-  }).then(({ data: { workflow_runs } }) => workflow_runs.map(run => run.head_sha));
-
-  return await findExistingCommit(shas);
-}
-
-async function findMergeBaseRef() {
-  if (eventName == 'merge_group') {
-    const mergeQueueBranch = await findMergeQueueBranch(owner, repo, mainBranchName);
-    return `origin/${mergeQueueBranch}`;
-  } else {
-    return 'HEAD'
-  }
-}
-
-function findMergeQueuePr() {
-  const { head_ref, base_sha } = github.context.payload.merge_group;
-  const result = new RegExp(`^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`).exec(head_ref);
-  return result ? result.at(1) : undefined;
-}
-
-async function findMergeQueueBranch() {
-  const pull_number = findMergeQueuePr(mainBranchName);
-  if (!pull_number) {
-    throw new Error('Failed to determine PR number')
-  }
-  process.stdout.write('\n');
-  process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
-  const octokit = new Octokit();
-  const result = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number });
-  return result.data.head.ref;
-}
-
-/**
- * Get first existing commit
- * @param {string[]} commit_shas
- * @returns {string?}
- */
-async function findExistingCommit(shas) {
-  for (const commitSha of shas) {
-    if (await commitExists(commitSha)) {
-      return commitSha;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Check if given commit is valid
- * @param {string} commitSha
- * @returns {boolean}
- */
-async function commitExists(commitSha) {
-  try {
-    spawnSync('git', ['cat-file', '-e', commitSha], { stdio: ['pipe', 'pipe', null] });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Strips LF line endings from given string
- * @param {string} string
- */
-function stripNewLineEndings(string) {
-  return string.replace('\n', '');
-}
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(5468);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;
