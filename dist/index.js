@@ -15033,7 +15033,7 @@ function findMergeQueueBranch() {
         process.stdout.write('\n');
         process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
         const octokit = new action_1.Octokit();
-        const result = yield octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', { owner, repo, pull_number: +pull_number });
+        const result = yield octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
         return result.data.head.ref;
     });
 }
