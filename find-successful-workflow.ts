@@ -1,6 +1,8 @@
 import { Octokit } from '@octokit/action';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { getProxyForUrl } from 'proxy-from-env';
 import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 
@@ -12,6 +14,20 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 const defaultWorkingDirectory = '.';
+
+// octokit plugin to support the standard environment variables http_proxy, https_proxy and no_proxy
+function autoProxyAgent(octokit: Octokit, options) {
+  const proxy = getProxyForUrl(options.baseUrl);
+  if (!proxy) return
+
+  const agent = new HttpsProxyAgent(proxy)
+  octokit.hook.before('request', (options) => {
+    options.request.agent = agent
+  });
+}
+
+const ProxifiedOctokit = Octokit.plugin(autoProxyAgent);
+const octokit = new ProxifiedOctokit();
 
 let BASE_SHA;
 (async () => {
@@ -98,7 +114,6 @@ function reportFailure(branchName) {
  * @returns
  */
 async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
-  const octokit = new Octokit();
   if (!workflow_id) {
     workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
       owner,
@@ -145,7 +160,6 @@ async function findMergeQueueBranch() {
   }
   process.stdout.write('\n');
   process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
-  const octokit = new Octokit();
   const result = await octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
   return result.data.head.ref;
 }

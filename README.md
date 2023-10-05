@@ -37,7 +37,7 @@ jobs:
       # OPTION 1) Environment variables
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v3
+        uses: nrwl/nx-set-shas@v4
     
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -48,7 +48,7 @@ jobs:
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         id: setSHAs
-        uses: nrwl/nx-set-shas@v3
+        uses: nrwl/nx-set-shas@v4
     
       - run: |
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
@@ -62,7 +62,7 @@ jobs:
 
 <!-- start configuration-options -->
 ```yaml
-- uses: nrwl/nx-set-shas@v3
+- uses: nrwl/nx-set-shas@v4
   with:
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
