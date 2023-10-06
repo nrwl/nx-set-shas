@@ -3,6 +3,8 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { getProxyForUrl } from 'proxy-from-env';
 
 const { runId, repo: { repo, owner }, eventName } = github.context;
 process.env.GITHUB_TOKEN = process.argv[2];
@@ -12,6 +14,12 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 const defaultWorkingDirectory = '.';
+
+
+
+const ProxifiedClient = Octokit.plugin(
+  proxyPlugin
+);
 
 let BASE_SHA;
 (async () => {
@@ -88,6 +96,15 @@ function reportFailure(branchName) {
     - If no, then you might have changed your git history and those commits no longer exist.`);
 }
 
+function proxyPlugin(octokit: Octokit) {
+  octokit.hook.before('request', options => {
+    const proxy: URL = getProxyForUrl(options.baseUrl)
+    if (proxy) {
+      options.request.agent = new HttpsProxyAgent(proxy)
+    }
+  })
+}
+
 /**
  * Find last successful workflow run on the repo
  * @param {string?} workflow_id
@@ -98,7 +115,7 @@ function reportFailure(branchName) {
  * @returns
  */
 async function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
-  const octokit = new Octokit();
+  const octokit = new ProxifiedClient();
   if (!workflow_id) {
     workflow_id = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
       owner,
@@ -145,7 +162,7 @@ async function findMergeQueueBranch() {
   }
   process.stdout.write('\n');
   process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
-  const octokit = new Octokit();
+  const octokit = new ProxifiedClient();
   const result = await octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
   return result.data.head.ref;
 }
@@ -185,3 +202,4 @@ async function commitExists(commitSha) {
 function stripNewLineEndings(string) {
   return string.replace('\n', '');
 }
+
