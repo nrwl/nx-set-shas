@@ -103,6 +103,7 @@ jobs:
 
 This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`:
 
+<!-- start permissions-in-v2 -->
 ```yaml
 jobs:
   myjob:
@@ -112,6 +113,43 @@ jobs:
       contents: 'read'
       actions: 'read'
 ```
+<!-- end permissions-in-v2 -->
+
+## Self-hosted runners
+
+This Action supports usage of your own self-hosted runners, but since it uses GitHub APIs you will need to grant in explicit access rights:
+
+<!-- self-hosted runners -->
+```yaml
+# ... more CI config ...
+
+jobs:
+  myjob:
+    runs-on: self-hosted
+      container: my-org/my-amazing-image:v1.2.3-fresh
+    name: My Job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0
+
+      # Mark your git directory as safe
+      - name: Set Directory as Safe
+        run: |
+          git config --system --add safe.directory "$GITHUB_WORKSPACE"
+        shell: bash
+
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v4
+
+      - run: |
+          echo "BASE: ${{ env.NX_BASE }}"
+          echo "HEAD: ${{ env.NX_HEAD }}"
+
+      # ... more CI config ...
+```
+<!-- end self-hosted runners -->
 
 ## Background
 
