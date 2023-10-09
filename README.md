@@ -117,7 +117,7 @@ jobs:
 
 ## Self-hosted runners
 
-This Action supports usage of your own self-hosted runners, but since it uses GitHub APIs you will need to grant in explicit access rights:
+This Action supports usage of your own self-hosted runners, but since it uses GitHub APIs you will need to grant it explicit access rights:
 
 <!-- self-hosted runners -->
 ```yaml
