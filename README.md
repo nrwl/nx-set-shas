@@ -82,7 +82,7 @@ jobs:
     # Default: false
     error-on-no-successful-workflow: ''
 
-    # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull-request, release etc.
+    # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
     #
     # Default: push
     last-successful-event: ''
