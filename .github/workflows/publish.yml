@@ -5,11 +5,80 @@ on:
       - main
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: jameshenry/publish-shell-action@v1
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-
+      - run: |
+          npm ci
+          npm run build
+      - name: Check for changes (fail if we forgot to update dist)
+        run: git diff --quiet dist
+        id: diff
+        continue-on-error: true
+
+      - name: Set up commit signing w/ GPG
+        if: ${{ steps.diff.outcome != 'success' }}
+        id: configure
+        uses: tradeshift/actions-git/configure-from-gpg-key@v1
+        with:
+          gpg-key: ${{ secrets.TRADESHIFTCI_GPG_KEY }}
+
+      - name: PR build changes if needed
+        uses: tradeshift/create-pull-request@v3
+        if: ${{ steps.diff.outcome != 'success' }}
+        with:
+          commit-message: "build: update dist folder"
+          branch: release-update-dist
+          title: "Update for release: update package runtime"
+          body: |
+            This PR is created automatically because the repo has been changed
+            without updating the packaged version in the `dist` folder.
+            Before these changes can be released, the `dist` folder has to be
+            updated. By merging this when the build is green, a new release
+            will be created based on the list of changes since the last release.
+            For more info see [semantic-release.gitbook.io/semantic-release/](https://semantic-release.gitbook.io/semantic-release/)
+          token: ${{ secrets.GH_TOKEN }}
+          committer: ${{ steps.configure.outputs.user }}
+          author: ${{ steps.configure.outputs.user }}
+
+      - name: Fail build on diff
+        if: ${{ steps.diff.outcome != 'success' }}
+        run: exit 1
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: 🚀 Release
+        uses: tradeshift/actions-semantic-release@v1
+        id: semantic-release
+        with:
+          check_name: Semantic release
+          branches: |
+            [
+              'master',
+              'main',
+              'next',
+              {name: 'beta', prerelease: true},
+              {name: 'alpha', prerelease: true}
+            ]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Action tags (major version tag)
+        if: ${{ steps.semantic-release.outputs.new_release_published }}
+        run: |
+          git tag -f v${{ steps.semantic-release.outputs.new_release_major_version }}
+          git push -f origin v${{ steps.semantic-release.outputs.new_release_major_version }}
