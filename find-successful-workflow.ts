@@ -259,6 +259,7 @@ async function commitExists(
       owner,
       repo,
       sha: branchName,
+      per_page: 100,
     });
 
     return commits.data.some(

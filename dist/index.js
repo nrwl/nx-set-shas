@@ -38048,6 +38048,7 @@ function commitExists(octokit, branchName, commitSha) {
                 owner,
                 repo,
                 sha: branchName,
+                per_page: 100,
             });
             return commits.data.some((commit) => commit.sha === commitSha);
         }
