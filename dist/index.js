@@ -37960,6 +37960,7 @@ function proxyPlugin(octokit) {
         }
     });
 }
+const messagesToSkip = ["[skip ci]"];
 /**
  * Find last successful workflow run on the repo
  */
@@ -37993,7 +37994,35 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             status: "success",
         })
             .then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
-        return yield findExistingCommit(octokit, branch, shas);
+        const headSha = yield findExistingCommit(octokit, branch, shas);
+        if (!headSha) {
+            return headSha;
+        }
+        process.stdout.write(`Checking commits from "${headSha}" onwards for skip ci messages\n`);
+        // now we have the commit, step forward and find the next few commits that don't have [skip ci]
+        const commits = (yield octokit.request("GET /repos/{owner}/{repo}/commits", {
+            owner,
+            repo,
+            sha: headSha,
+            per_page: 100,
+        })).data.map((c) => {
+            return {
+                sha: c.sha,
+                message: c.commit.message,
+            };
+        });
+        process.stdout.write(`Got ${commits.length} commits:\n`);
+        let shaResult = headSha;
+        for (const commit of commits) {
+            const containsAnySkipMessages = messagesToSkip.some((m) => commit.message.indexOf(m) >= 0);
+            process.stdout.write(`[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`);
+            if (containsAnySkipMessages) {
+                shaResult = commit.sha;
+                continue;
+            }
+            return shaResult;
+        }
+        return shaResult;
     });
 }
 function findMergeBaseRef() {

@@ -81,6 +81,13 @@ let BASE_SHA: string;
         process.stdout.write(
           `WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`,
         );
+        process.stdout.write(
+          `We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`,
+        );
+        process.stdout.write("\n");
+        process.stdout.write(
+          `NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`,
+        );
         if (fallbackSHA) {
           BASE_SHA = fallbackSHA;
           process.stdout.write(`Using provided fallback SHA: ${fallbackSHA}\n`);
@@ -145,6 +152,8 @@ function proxyPlugin(octokit: Octokit): void {
   });
 }
 
+const messagesToSkip = ["[skip ci]"];
+
 /**
  * Find last successful workflow run on the repo
  */
@@ -193,7 +202,44 @@ async function findSuccessfulCommit(
       workflow_runs.map((run: { head_sha: any }) => run.head_sha),
     );
 
-  return await findExistingCommit(octokit, branch, shas);
+  const headSha = await findExistingCommit(octokit, branch, shas);
+  if (!headSha) {
+    return headSha;
+  }
+  process.stdout.write(
+    `Checking commits from "${headSha}" onwards for skip ci messages\n`,
+  );
+  // now we have the commit, step forward and find the next few commits that don't have [skip ci]
+  const commits = (
+    await octokit.request("GET /repos/{owner}/{repo}/commits", {
+      owner,
+      repo,
+      sha: headSha,
+      per_page: 100,
+    })
+  ).data.map((c) => {
+    return {
+      sha: c.sha,
+      message: c.commit.message,
+    };
+  });
+  process.stdout.write(`Got ${commits.length} commits:\n`);
+
+  let shaResult = headSha;
+  for (const commit of commits) {
+    const containsAnySkipMessages = messagesToSkip.some(
+      (m) => commit.message.indexOf(m) >= 0,
+    );
+    process.stdout.write(
+      `[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`,
+    );
+    if (containsAnySkipMessages) {
+      shaResult = commit.sha;
+      continue;
+    }
+    return shaResult;
+  }
+  return shaResult;
 }
 
 async function findMergeBaseRef(): Promise<string> {
@@ -285,4 +331,145 @@ async function commitExists(
  */
 function stripNewLineEndings(string: string): string {
   return string.replace("\n", "");
+}
+
+export interface Commit {
+  url: string;
+  sha: string;
+  node_id: string;
+  html_url: string;
+  comments_url: string;
+  commit: {
+    url: string;
+    author: null | GitUser;
+    committer: null | GitUser1;
+    message: string;
+    comment_count: number;
+    tree: {
+      sha: string;
+      url: string;
+      [k: string]: unknown;
+    };
+    verification?: Verification;
+    [k: string]: unknown;
+  };
+  author: null | SimpleUser;
+  committer: null | SimpleUser1;
+  parents: {
+    sha: string;
+    url: string;
+    html_url?: string;
+    [k: string]: unknown;
+  }[];
+  stats?: {
+    additions?: number;
+    deletions?: number;
+    total?: number;
+    [k: string]: unknown;
+  };
+  files?: DiffEntry[];
+  [k: string]: unknown;
+}
+/**
+ * Metaproperties for Git author/committer information.
+ */
+export interface GitUser {
+  name?: string;
+  email?: string;
+  date?: string;
+  [k: string]: unknown;
+}
+/**
+ * Metaproperties for Git author/committer information.
+ */
+export interface GitUser1 {
+  name?: string;
+  email?: string;
+  date?: string;
+  [k: string]: unknown;
+}
+export interface Verification {
+  verified: boolean;
+  reason: string;
+  payload: string | null;
+  signature: string | null;
+  [k: string]: unknown;
+}
+/**
+ * A GitHub user.
+ */
+export interface SimpleUser {
+  name?: string | null;
+  email?: string | null;
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  gravatar_id: string | null;
+  url: string;
+  html_url: string;
+  followers_url: string;
+  following_url: string;
+  gists_url: string;
+  starred_url: string;
+  subscriptions_url: string;
+  organizations_url: string;
+  repos_url: string;
+  events_url: string;
+  received_events_url: string;
+  type: string;
+  site_admin: boolean;
+  starred_at?: string;
+  [k: string]: unknown;
+}
+/**
+ * A GitHub user.
+ */
+export interface SimpleUser1 {
+  name?: string | null;
+  email?: string | null;
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  gravatar_id: string | null;
+  url: string;
+  html_url: string;
+  followers_url: string;
+  following_url: string;
+  gists_url: string;
+  starred_url: string;
+  subscriptions_url: string;
+  organizations_url: string;
+  repos_url: string;
+  events_url: string;
+  received_events_url: string;
+  type: string;
+  site_admin: boolean;
+  starred_at?: string;
+  [k: string]: unknown;
+}
+/**
+ * Diff Entry
+ */
+export interface DiffEntry {
+  sha: string;
+  filename: string;
+  status:
+    | "added"
+    | "removed"
+    | "modified"
+    | "renamed"
+    | "copied"
+    | "changed"
+    | "unchanged";
+  additions: number;
+  deletions: number;
+  changes: number;
+  blob_url: string;
+  raw_url: string;
+  contents_url: string;
+  patch?: string;
+  previous_filename?: string;
+  [k: string]: unknown;
 }
