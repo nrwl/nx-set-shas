@@ -5,6 +5,7 @@ import { spawnSync } from "child_process";
 import { existsSync } from "fs";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { getProxyForUrl } from "proxy-from-env";
+import * as dayjs from "dayjs";
 
 const {
   runId,
@@ -221,12 +222,15 @@ async function findSuccessfulCommit(
     return {
       sha: c.sha,
       message: c.commit.message,
+      date: c.commit.committer.date,
     };
   });
-  process.stdout.write(`Got ${commits.length} commits:\n`);
+  const dayJsStart = dayjs(commits.find((c) => c.sha !== headSha).date);
+  const filtered = commits.filter((c) => dayjs(c.date).isAfter(dayJsStart));
+  process.stdout.write(`Got ${filtered.length} commits:\n`);
 
   let shaResult = headSha;
-  for (const commit of commits) {
+  for (const commit of filtered) {
     const containsAnySkipMessages = messagesToSkip.some(
       (m) => commit.message.indexOf(m) >= 0,
     );
