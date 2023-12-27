@@ -22,6 +22,13 @@ const getLastSkippedCommitAfterBase = process.argv[9];
 const defaultWorkingDirectory = ".";
 
 const ProxifiedClient = Octokit.plugin(proxyPlugin);
+const messagesToSkip = [
+  "[skip ci]",
+  "[ci skip]",
+  "[no ci]",
+  "[skip actions]",
+  "[actions skip]",
+];
 
 let BASE_SHA: string;
 (async () => {
@@ -72,14 +79,6 @@ let BASE_SHA: string;
       core.setFailed(e.message);
       return;
     }
-    //todo move to inputs
-    const messagesToSkip = [
-      "[skip ci]",
-      "[ci skip]",
-      "[no ci]",
-      "[skip actions]",
-      "[actions skip]",
-    ];
     if (getLastSkippedCommitAfterBase && BASE_SHA) {
       try {
         BASE_SHA = await findLastSkippedCommitAfterSha(
