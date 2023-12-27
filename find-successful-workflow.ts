@@ -76,8 +76,8 @@ let BASE_SHA: string;
     const messagesToSkip = ["[skip ci]"];
     if (getLastSkippedCommitAfterBase && BASE_SHA) {
       BASE_SHA = await findLastSkippedCommitAfterSha(
-        BASE_SHA,
-        HEAD_SHA,
+        stripNewLineEndings(BASE_SHA),
+        stripNewLineEndings(HEAD_SHA),
         messagesToSkip,
         mainBranchName,
       );
@@ -388,6 +388,7 @@ async function findAllCommitsBetweenShas(
  * Gets the specified commit by its SHA
  */
 async function getCommit(octokit: Octokit, commitSha: string) {
+  process.stdout.write(`Getting commit for sha: ${commitSha}\n`);
   const fullCommit = (
     await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
       owner,
@@ -395,6 +396,7 @@ async function getCommit(octokit: Octokit, commitSha: string) {
       commit_sha: commitSha,
     })
   ).data;
+  process.stdout.write(`SHA get succeeded: ${commitSha}\n`);
   return getSimplifiedCommit(fullCommit);
 }
 /**

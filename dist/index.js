@@ -37910,7 +37910,7 @@ let BASE_SHA;
         const getLastSkippedCommitAfterBase = true;
         const messagesToSkip = ["[skip ci]"];
         if (getLastSkippedCommitAfterBase && BASE_SHA) {
-            BASE_SHA = yield findLastSkippedCommitAfterSha(BASE_SHA, HEAD_SHA, messagesToSkip, mainBranchName);
+            BASE_SHA = yield findLastSkippedCommitAfterSha(stripNewLineEndings(BASE_SHA), stripNewLineEndings(HEAD_SHA), messagesToSkip, mainBranchName);
         }
         if (!BASE_SHA) {
             if (errorOnNoSuccessfulWorkflow === "true") {
@@ -38132,11 +38132,13 @@ function findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit, 
  */
 function getCommit(octokit, commitSha) {
     return __awaiter(this, void 0, void 0, function* () {
+        process.stdout.write(`Getting commit for sha: ${commitSha}\n`);
         const fullCommit = (yield octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
             owner,
             repo,
             commit_sha: commitSha,
         })).data;
+        process.stdout.write(`SHA get succeeded: ${commitSha}\n`);
         return getSimplifiedCommit(fullCommit);
     });
 }
