@@ -338,18 +338,21 @@ async function findLastSkippedCommitAfterSha(
   ).filter((c) => c.sha !== baseSha);
   const sortedCommits = commits.sort((a, b) => a.date.localeCompare(b.date));
 
-  let newBaseSha = baseSha;
+  let useNext = false;
   for (const commit of sortedCommits) {
+    if (useNext) {
+      return commit.sha;
+    }
     const containsAnySkipMessages = messagesToSkip.some(
       (m) => commit.message.indexOf(m) >= 0,
     );
     if (containsAnySkipMessages) {
-      newBaseSha = commit.sha;
+      useNext = true;
       continue;
     }
-    return newBaseSha;
+    return commit.sha;
   }
-  return newBaseSha;
+  return baseSha;
 }
 
 /**
