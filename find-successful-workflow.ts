@@ -18,6 +18,7 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 const fallbackSHA = process.argv[8];
+const getLastSkippedCommitAfterBase = process.argv[9];
 const defaultWorkingDirectory = ".";
 
 const ProxifiedClient = Octokit.plugin(proxyPlugin);
@@ -72,15 +73,25 @@ let BASE_SHA: string;
       return;
     }
     //todo move to inputs
-    const getLastSkippedCommitAfterBase = true;
-    const messagesToSkip = ["[skip ci]"];
+    const messagesToSkip = [
+      "[skip ci]",
+      "[ci skip]",
+      "[no ci]",
+      "[skip actions]",
+      "[actions skip]",
+    ];
     if (getLastSkippedCommitAfterBase && BASE_SHA) {
-      BASE_SHA = await findLastSkippedCommitAfterSha(
-        stripNewLineEndings(BASE_SHA),
-        stripNewLineEndings(HEAD_SHA),
-        messagesToSkip,
-        mainBranchName,
-      );
+      try {
+        BASE_SHA = await findLastSkippedCommitAfterSha(
+          stripNewLineEndings(BASE_SHA),
+          stripNewLineEndings(HEAD_SHA),
+          messagesToSkip,
+          mainBranchName,
+        );
+      } catch (e) {
+        core.setFailed(e.message);
+        return;
+      }
     }
 
     if (!BASE_SHA) {
@@ -346,6 +357,9 @@ async function findLastSkippedCommitAfterSha(
   return newBaseSha;
 }
 
+/**
+ * Finds all commits between two provided commits
+ */
 async function findAllCommitsBetweenShas(
   octokit: Octokit,
   branchName: string,
@@ -386,7 +400,10 @@ async function findAllCommitsBetweenShas(
 /**
  * Gets the specified commit by its SHA
  */
-async function getCommit(octokit: Octokit, commitSha: string) {
+async function getCommit(
+  octokit: Octokit,
+  commitSha: string,
+): Promise<SimplifiedCommit> {
   process.stdout.write(`Getting commit for sha: ${commitSha}\n`);
   const fullCommit = (
     await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
@@ -398,159 +415,20 @@ async function getCommit(octokit: Octokit, commitSha: string) {
   process.stdout.write(`SHA get succeeded: ${commitSha}\n`);
   return getSimplifiedCommit(fullCommit);
 }
+
 /**
  * strips out properties from the GitHub commit object to a simplified version for working with
  */
-function getSimplifiedCommit(commit: Commit): SimplifiedCommit {
+function getSimplifiedCommit(commit: any): SimplifiedCommit {
   return {
     sha: commit.sha,
     message: commit.commit.message,
     date: commit.commit.committer.date,
   };
 }
+
 interface SimplifiedCommit {
   sha: string;
   message: string;
   date: string;
-}
-
-export interface Commit {
-  url: string;
-  sha: string;
-  node_id: string;
-  html_url: string;
-  comments_url: string;
-  commit: {
-    url: string;
-    author: null | GitUser;
-    committer: null | GitUser1;
-    message: string;
-    comment_count: number;
-    tree: {
-      sha: string;
-      url: string;
-      [k: string]: unknown;
-    };
-    verification?: Verification;
-    [k: string]: unknown;
-  };
-  author: null | SimpleUser;
-  committer: null | SimpleUser1;
-  parents: {
-    sha: string;
-    url: string;
-    html_url?: string;
-    [k: string]: unknown;
-  }[];
-  stats?: {
-    additions?: number;
-    deletions?: number;
-    total?: number;
-    [k: string]: unknown;
-  };
-  files?: DiffEntry[];
-  [k: string]: unknown;
-}
-/**
- * Metaproperties for Git author/committer information.
- */
-export interface GitUser {
-  name?: string;
-  email?: string;
-  date?: string;
-  [k: string]: unknown;
-}
-/**
- * Metaproperties for Git author/committer information.
- */
-export interface GitUser1 {
-  name?: string;
-  email?: string;
-  date?: string;
-  [k: string]: unknown;
-}
-export interface Verification {
-  verified: boolean;
-  reason: string;
-  payload: string | null;
-  signature: string | null;
-  [k: string]: unknown;
-}
-/**
- * A GitHub user.
- */
-export interface SimpleUser {
-  name?: string | null;
-  email?: string | null;
-  login: string;
-  id: number;
-  node_id: string;
-  avatar_url: string;
-  gravatar_id: string | null;
-  url: string;
-  html_url: string;
-  followers_url: string;
-  following_url: string;
-  gists_url: string;
-  starred_url: string;
-  subscriptions_url: string;
-  organizations_url: string;
-  repos_url: string;
-  events_url: string;
-  received_events_url: string;
-  type: string;
-  site_admin: boolean;
-  starred_at?: string;
-  [k: string]: unknown;
-}
-/**
- * A GitHub user.
- */
-export interface SimpleUser1 {
-  name?: string | null;
-  email?: string | null;
-  login: string;
-  id: number;
-  node_id: string;
-  avatar_url: string;
-  gravatar_id: string | null;
-  url: string;
-  html_url: string;
-  followers_url: string;
-  following_url: string;
-  gists_url: string;
-  starred_url: string;
-  subscriptions_url: string;
-  organizations_url: string;
-  repos_url: string;
-  events_url: string;
-  received_events_url: string;
-  type: string;
-  site_admin: boolean;
-  starred_at?: string;
-  [k: string]: unknown;
-}
-/**
- * Diff Entry
- */
-export interface DiffEntry {
-  sha: string;
-  filename: string;
-  status:
-    | "added"
-    | "removed"
-    | "modified"
-    | "renamed"
-    | "copied"
-    | "changed"
-    | "unchanged";
-  additions: number;
-  deletions: number;
-  changes: number;
-  blob_url: string;
-  raw_url: string;
-  contents_url: string;
-  patch?: string;
-  previous_filename?: string;
-  [k: string]: unknown;
 }
