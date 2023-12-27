@@ -347,7 +347,7 @@ async function findLastSkippedCommitAfterSha(
       newBaseSha = commit.sha;
       continue;
     }
-    return newBaseSha;
+    return commit.sha;
   }
   return newBaseSha;
 }
