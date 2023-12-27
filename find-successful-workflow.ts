@@ -17,9 +17,17 @@ const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
+const getLastSkippedCommitAfterBase = process.argv[8] === "true" ? true : false;
 const defaultWorkingDirectory = ".";
 
 const ProxifiedClient = Octokit.plugin(proxyPlugin);
+const messagesToSkip = [
+  "[skip ci]",
+  "[ci skip]",
+  "[no ci]",
+  "[skip actions]",
+  "[actions skip]",
+];
 
 let BASE_SHA: string;
 (async () => {
@@ -29,7 +37,7 @@ let BASE_SHA: string;
     } else {
       process.stdout.write("\n");
       process.stdout.write(
-        `WARNING: Working directory '${workingDirectory}' doesn't exist.\n`
+        `WARNING: Working directory '${workingDirectory}' doesn't exist.\n`,
       );
     }
   }
@@ -49,7 +57,7 @@ let BASE_SHA: string;
       const baseResult = spawnSync(
         "git",
         ["merge-base", `origin/${mainBranchName}`, mergeBaseRef],
-        { encoding: "utf-8" }
+        { encoding: "utf-8" },
       );
       BASE_SHA = baseResult.stdout;
     } catch (e) {
@@ -64,11 +72,24 @@ let BASE_SHA: string;
         owner,
         repo,
         mainBranchName,
-        lastSuccessfulEvent
+        lastSuccessfulEvent,
       );
     } catch (e) {
       core.setFailed(e.message);
       return;
+    }
+    if (getLastSkippedCommitAfterBase && BASE_SHA) {
+      try {
+        BASE_SHA = await findLastSkippedCommitAfterSha(
+          stripNewLineEndings(BASE_SHA),
+          stripNewLineEndings(HEAD_SHA),
+          messagesToSkip,
+          mainBranchName,
+        );
+      } catch (e) {
+        core.setFailed(e.message);
+        return;
+      }
     }
 
     if (!BASE_SHA) {
@@ -76,27 +97,27 @@ let BASE_SHA: string;
         reportFailure(mainBranchName);
         return;
       } else {
-        process.stdout.write(   "\n");
+        process.stdout.write("\n");
         process.stdout.write(
-          `WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`
+          `WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`,
         );
         process.stdout.write(
-          `We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`
+          `We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`,
         );
         process.stdout.write("\n");
         process.stdout.write(
-          `NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`
+          `NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`,
         );
         process.stdout.write("\n");
 
         const commitCountOutput = spawnSync(
           "git",
           ["rev-list", "--count", `origin/${mainBranchName}`],
-          { encoding: "utf-8" }
+          { encoding: "utf-8" },
         ).stdout;
         const commitCount = parseInt(
           stripNewLineEndings(commitCountOutput),
-          10
+          10,
         );
 
         const LAST_COMMIT_CMD = `origin/${mainBranchName}${
@@ -111,7 +132,7 @@ let BASE_SHA: string;
     } else {
       process.stdout.write("\n");
       process.stdout.write(
-        `Found the last successful workflow run on 'origin/${mainBranchName}'\n`
+        `Found the last successful workflow run on 'origin/${mainBranchName}'\n`,
       );
       process.stdout.write(`Commit: ${BASE_SHA}\n`);
     }
@@ -148,7 +169,7 @@ async function findSuccessfulCommit(
   owner: string,
   repo: string,
   branch: string,
-  lastSuccessfulEvent: string
+  lastSuccessfulEvent: string,
 ): Promise<string | undefined> {
   const octokit = new ProxifiedClient();
   if (!workflow_id) {
@@ -162,7 +183,7 @@ async function findSuccessfulCommit(
       .then(({ data: { workflow_id } }) => workflow_id);
     process.stdout.write("\n");
     process.stdout.write(
-      `Workflow Id not provided. Using workflow '${workflow_id}'\n`
+      `Workflow Id not provided. Using workflow '${workflow_id}'\n`,
     );
   }
   // fetch all workflow runs on a given repo/branch/workflow with push and success
@@ -177,10 +198,10 @@ async function findSuccessfulCommit(
         workflow_id,
         event: lastSuccessfulEvent,
         status: "success",
-      }
+      },
     )
     .then(({ data: { workflow_runs } }) =>
-      workflow_runs.map((run: { head_sha: any }) => run.head_sha)
+      workflow_runs.map((run: { head_sha: any }) => run.head_sha),
     );
 
   return await findExistingCommit(octokit, branch, shas);
@@ -198,7 +219,7 @@ async function findMergeBaseRef(): Promise<string> {
 function findMergeQueuePr(): string {
   const { head_ref, base_sha } = github.context.payload.merge_group;
   const result = new RegExp(
-    `^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`
+    `^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`,
   ).exec(head_ref);
   return result ? result.at(1) : undefined;
 }
@@ -213,7 +234,7 @@ async function findMergeQueueBranch(): Promise<string> {
   const octokit = new ProxifiedClient();
   const result = await octokit.request(
     `GET /repos/${owner}/${repo}/pulls/${pull_number}`,
-    { owner, repo, pull_number: +pull_number }
+    { owner, repo, pull_number: +pull_number },
   );
   return result.data.head.ref;
 }
@@ -224,7 +245,7 @@ async function findMergeQueueBranch(): Promise<string> {
 async function findExistingCommit(
   octokit: Octokit,
   branchName: string,
-  shas: string[]
+  shas: string[],
 ): Promise<string | undefined> {
   for (const commitSha of shas) {
     if (await commitExists(octokit, branchName, commitSha)) {
@@ -240,7 +261,7 @@ async function findExistingCommit(
 async function commitExists(
   octokit: Octokit,
   branchName: string,
-  commitSha: string
+  commitSha: string,
 ): Promise<boolean> {
   try {
     spawnSync("git", ["cat-file", "-e", commitSha], {
@@ -263,7 +284,7 @@ async function commitExists(
     });
 
     return commits.data.some(
-      (commit: { sha: string }) => commit.sha === commitSha
+      (commit: { sha: string }) => commit.sha === commitSha,
     );
   } catch {
     return false;
@@ -275,4 +296,112 @@ async function commitExists(
  */
 function stripNewLineEndings(string: string): string {
   return string.replace("\n", "");
+}
+/**
+ * Takes in an sha and then will walk forward in time finding the last commit that was a skip-ci type to use that as the new base
+ */
+async function findLastSkippedCommitAfterSha(
+  baseSha: string,
+  headSha: string,
+  messagesToSkip: string[] = [],
+  branchName: string,
+): Promise<string | undefined> {
+  process.stdout.write(
+    `Checking commits from "${baseSha}" onwards for skip ci messages\n`,
+  );
+  if (!messagesToSkip.length) {
+    process.stdout.write(`messagesToSkip was empty, returning\n`);
+    return;
+  }
+  const octokit = new ProxifiedClient();
+  const baseCommit = await getCommit(octokit, baseSha);
+  const headCommit = await getCommit(octokit, headSha);
+  const commits = (
+    await findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)
+  ).filter((c) => c.sha !== baseSha);
+  const sortedCommits = commits.sort((a, b) => a.date.localeCompare(b.date));
+
+  let newBaseSha = baseSha;
+  for (const commit of sortedCommits) {
+    const containsAnySkipMessages = messagesToSkip.some(
+      (m) => commit.message.indexOf(m) >= 0,
+    );
+    if (containsAnySkipMessages) {
+      newBaseSha = commit.sha;
+      continue;
+    }
+    return commit.sha === headSha ? baseSha : commit.sha;
+  }
+  return newBaseSha === headSha ? baseSha : newBaseSha;
+}
+
+/**
+ * Finds all commits between two provided commits
+ */
+async function findAllCommitsBetweenShas(
+  octokit: Octokit,
+  branchName: string,
+  baseCommit: SimplifiedCommit,
+  headCommit: SimplifiedCommit,
+  page = 1,
+): Promise<SimplifiedCommit[]> {
+  let commits = (
+    await octokit.request("GET /repos/{owner}/{repo}/commits", {
+      owner,
+      repo,
+      sha: branchName,
+      since: baseCommit.date,
+      until: headCommit.date,
+      page,
+      per_page: 100,
+    })
+  ).data.map(getSimplifiedCommit);
+  const resultsContainsHead = commits.some((c) => c.sha === headCommit.sha);
+  if (!resultsContainsHead) {
+    //need to get the next page as we haven't reached the head yet.
+    commits = commits.concat(
+      await findAllCommitsBetweenShas(
+        octokit,
+        branchName,
+        baseCommit,
+        headCommit,
+        page + 1,
+      ),
+    );
+  }
+  return commits;
+}
+
+/**
+ * Gets the specified commit by its SHA
+ */
+async function getCommit(
+  octokit: Octokit,
+  commitSha: string,
+): Promise<SimplifiedCommit> {
+  const fullCommit = (
+    await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
+      owner,
+      repo,
+      commit_sha: commitSha,
+    })
+  ).data;
+  return getSimplifiedCommit(fullCommit);
+}
+
+/**
+ * strips out properties from the GitHub commit object to a simplified version for working with
+ */
+function getSimplifiedCommit(commit: any): SimplifiedCommit {
+  return {
+    sha: commit.sha,
+    message: commit.commit.message,
+    date: commit.commit.committer.date,
+  };
+}
+
+interface SimplifiedCommit {
+  sha: string;
+  message: string;
+  date: string;
 }

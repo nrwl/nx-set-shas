@@ -7,7 +7,10 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 
 - [Example Usage](#example-usage)
 - [Configuration Options](#configuration-options)
+- [Permissions in v2+](#permissions-in-v2)
+- [Self-hosted runners](#self-hosted-runners)
 - [Background](#background)
+  - [Problem](#problem)
 - [License](#license)
 
 **NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
@@ -99,6 +102,10 @@ jobs:
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
     workflow-id: ""
+
+    # Specifies if the NX_BASE SHA should be set to the last [skip-ci] commit that occurred after the original NX_BASE. Includes [ci skip], [no ci], [skip actions], [actions skip]. Useful if your GitHub action commits tags, version numbers, etc to the repository which should not be included
+    # Default: false
+    get-last-skip-ci-commit: false
 ```
 
 <!-- end configuration-options -->
