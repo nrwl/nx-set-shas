@@ -336,16 +336,12 @@ async function findLastSkippedCommitAfterSha(
   const commits = (
     await findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)
   ).filter((c) => c.sha !== baseSha);
-  process.stdout.write(`Got ${commits.length} total commits to check:\n`);
   const sortedCommits = commits.sort((a, b) => a.date.localeCompare(b.date));
 
   let newBaseSha = baseSha;
   for (const commit of sortedCommits) {
     const containsAnySkipMessages = messagesToSkip.some(
       (m) => commit.message.indexOf(m) >= 0,
-    );
-    process.stdout.write(
-      `[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`,
     );
     if (containsAnySkipMessages) {
       newBaseSha = commit.sha;
@@ -366,9 +362,6 @@ async function findAllCommitsBetweenShas(
   headCommit: SimplifiedCommit,
   page = 1,
 ): Promise<SimplifiedCommit[]> {
-  process.stdout.write(
-    `Finding all commits on branch "${branchName}" between ${baseCommit.sha}|${baseCommit.date} and ${headCommit.sha}|${headCommit.date}, page: ${page}\n`,
-  );
   let commits = (
     await octokit.request("GET /repos/{owner}/{repo}/commits", {
       owner,
@@ -403,7 +396,6 @@ async function getCommit(
   octokit: Octokit,
   commitSha: string,
 ): Promise<SimplifiedCommit> {
-  process.stdout.write(`Getting commit for sha: ${commitSha}\n`);
   const fullCommit = (
     await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
       owner,
@@ -411,7 +403,6 @@ async function getCommit(
       commit_sha: commitSha,
     })
   ).data;
-  process.stdout.write(`SHA get succeeded: ${commitSha}\n`);
   return getSimplifiedCommit(fullCommit);
 }
 

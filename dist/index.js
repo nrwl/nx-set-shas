@@ -38107,12 +38107,10 @@ function findLastSkippedCommitAfterSha(baseSha, headSha, messagesToSkip = [], br
         const baseCommit = yield getCommit(octokit, baseSha);
         const headCommit = yield getCommit(octokit, headSha);
         const commits = (yield findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)).filter((c) => c.sha !== baseSha);
-        process.stdout.write(`Got ${commits.length} total commits to check:\n`);
         const sortedCommits = commits.sort((a, b) => a.date.localeCompare(b.date));
         let newBaseSha = baseSha;
         for (const commit of sortedCommits) {
             const containsAnySkipMessages = messagesToSkip.some((m) => commit.message.indexOf(m) >= 0);
-            process.stdout.write(`[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`);
             if (containsAnySkipMessages) {
                 newBaseSha = commit.sha;
                 continue;
@@ -38127,7 +38125,6 @@ function findLastSkippedCommitAfterSha(baseSha, headSha, messagesToSkip = [], br
  */
 function findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit, page = 1) {
     return __awaiter(this, void 0, void 0, function* () {
-        process.stdout.write(`Finding all commits on branch "${branchName}" between ${baseCommit.sha}|${baseCommit.date} and ${headCommit.sha}|${headCommit.date}, page: ${page}\n`);
         let commits = (yield octokit.request("GET /repos/{owner}/{repo}/commits", {
             owner,
             repo,
@@ -38150,13 +38147,11 @@ function findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit, 
  */
 function getCommit(octokit, commitSha) {
     return __awaiter(this, void 0, void 0, function* () {
-        process.stdout.write(`Getting commit for sha: ${commitSha}\n`);
         const fullCommit = (yield octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
             owner,
             repo,
             commit_sha: commitSha,
         })).data;
-        process.stdout.write(`SHA get succeeded: ${commitSha}\n`);
         return getSimplifiedCommit(fullCommit);
     });
 }
