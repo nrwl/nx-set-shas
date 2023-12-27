@@ -37868,10 +37868,14 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 <<<<<<< HEAD
+<<<<<<< HEAD
 const fallbackSHA = process.argv[8];
 =======
 const getLastSkippedCommitAfterBase = process.argv[8];
 >>>>>>> e270a80 (chore(skip-ci): creating input, cleanup)
+=======
+const getLastSkippedCommitAfterBase = process.argv[8] === "true" ? true : false;
+>>>>>>> 2ac45cf (fix(skip-ci): updating command and bool parsing)
 const defaultWorkingDirectory = ".";
 const ProxifiedClient = action_1.Octokit.plugin(proxyPlugin);
 const messagesToSkip = [

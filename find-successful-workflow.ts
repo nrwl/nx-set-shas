@@ -18,7 +18,7 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 const fallbackSHA = process.argv[8];
-const getLastSkippedCommitAfterBase = process.argv[9];
+const getLastSkippedCommitAfterBase = process.argv[9] === "true" ? true : false;
 const defaultWorkingDirectory = ".";
 
 const ProxifiedClient = Octokit.plugin(proxyPlugin);
