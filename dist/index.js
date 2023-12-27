@@ -38092,10 +38092,11 @@ function findLastSkippedCommitAfterSha(baseSha, headSha, messagesToSkip = [], br
         const octokit = new ProxifiedClient();
         const baseCommit = yield getCommit(octokit, baseSha);
         const headCommit = yield getCommit(octokit, headSha);
-        const commitsToCheck = (yield findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)).filter((c) => c.sha !== baseSha);
-        process.stdout.write(`Got ${commitsToCheck.length} total commits to check:\n`);
+        const commits = (yield findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)).filter((c) => c.sha !== baseSha);
+        process.stdout.write(`Got ${commits.length} total commits to check:\n`);
+        const sortedCommits = commits.sort((a, b) => a.date.localeCompare(b.date));
         let newBaseSha = baseSha;
-        for (const commit of commitsToCheck) {
+        for (const commit of sortedCommits) {
             const containsAnySkipMessages = messagesToSkip.some((m) => commit.message.indexOf(m) >= 0);
             process.stdout.write(`[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`);
             if (containsAnySkipMessages) {
