@@ -5,7 +5,6 @@ import { spawnSync } from "child_process";
 import { existsSync } from "fs";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { getProxyForUrl } from "proxy-from-env";
-import * as dayjs from "dayjs";
 
 const {
   runId,
@@ -71,6 +70,17 @@ let BASE_SHA: string;
     } catch (e) {
       core.setFailed(e.message);
       return;
+    }
+    //todo move to inputs
+    const getLastSkippedCommitAfterBase = true;
+    const messagesToSkip = ["[skip ci]"];
+    if (getLastSkippedCommitAfterBase && BASE_SHA) {
+      BASE_SHA = await findLastSkippedCommitAfterSha(
+        BASE_SHA,
+        HEAD_SHA,
+        messagesToSkip,
+        mainBranchName,
+      );
     }
 
     if (!BASE_SHA) {
@@ -153,8 +163,6 @@ function proxyPlugin(octokit: Octokit): void {
   });
 }
 
-const messagesToSkip = ["[skip ci]"];
-
 /**
  * Find last successful workflow run on the repo
  */
@@ -203,47 +211,7 @@ async function findSuccessfulCommit(
       workflow_runs.map((run: { head_sha: any }) => run.head_sha),
     );
 
-  const headSha = await findExistingCommit(octokit, branch, shas);
-  if (!headSha) {
-    return headSha;
-  }
-  process.stdout.write(
-    `Checking commits from "${headSha}" onwards for skip ci messages\n`,
-  );
-  // now we have the commit, step forward and find the next few commits that don't have [skip ci]
-  const commits = (
-    await octokit.request("GET /repos/{owner}/{repo}/commits", {
-      owner,
-      repo,
-      sha: headSha,
-      per_page: 100,
-    })
-  ).data.map((c) => {
-    return {
-      sha: c.sha,
-      message: c.commit.message,
-      date: c.commit.committer.date,
-    };
-  });
-  const dayJsStart = dayjs(commits.find((c) => c.sha !== headSha).date);
-  const filtered = commits.filter((c) => dayjs(c.date).isAfter(dayJsStart));
-  process.stdout.write(`Got ${filtered.length} commits:\n`);
-
-  let shaResult = headSha;
-  for (const commit of filtered) {
-    const containsAnySkipMessages = messagesToSkip.some(
-      (m) => commit.message.indexOf(m) >= 0,
-    );
-    process.stdout.write(
-      `[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`,
-    );
-    if (containsAnySkipMessages) {
-      shaResult = commit.sha;
-      continue;
-    }
-    return shaResult;
-  }
-  return shaResult;
+  return await findExistingCommit(octokit, branch, shas);
 }
 
 async function findMergeBaseRef(): Promise<string> {
@@ -335,6 +303,114 @@ async function commitExists(
  */
 function stripNewLineEndings(string: string): string {
   return string.replace("\n", "");
+}
+/**
+ * Takes in an sha and then will walk forward in time finding the last commit that was a skip-ci type to use that as the new base
+ */
+async function findLastSkippedCommitAfterSha(
+  baseSha: string,
+  headSha: string,
+  messagesToSkip: string[] = [],
+  branchName: string,
+): Promise<string | undefined> {
+  process.stdout.write(
+    `Checking commits from "${baseSha}" onwards for skip ci messages\n`,
+  );
+  if (!messagesToSkip.length) {
+    process.stdout.write(`messagesToSkip was empty, returning\n`);
+    return;
+  }
+  const octokit = new ProxifiedClient();
+  const baseCommit = await getCommit(octokit, baseSha);
+  const headCommit = await getCommit(octokit, headSha);
+  const commitsToCheck = (
+    await findAllCommitsBetweenShas(octokit, branchName, baseCommit, headCommit)
+  ).filter((c) => c.sha !== baseSha);
+  process.stdout.write(
+    `Got ${commitsToCheck.length} total commits to check:\n`,
+  );
+
+  let newBaseSha = baseSha;
+  for (const commit of commitsToCheck) {
+    const containsAnySkipMessages = messagesToSkip.some(
+      (m) => commit.message.indexOf(m) >= 0,
+    );
+    process.stdout.write(
+      `[${commit.sha}][${containsAnySkipMessages}]: ${commit.message}\n`,
+    );
+    if (containsAnySkipMessages) {
+      newBaseSha = commit.sha;
+      continue;
+    }
+    return newBaseSha;
+  }
+  return newBaseSha;
+}
+
+async function findAllCommitsBetweenShas(
+  octokit: Octokit,
+  branchName: string,
+  baseCommit: SimplifiedCommit,
+  headCommit: SimplifiedCommit,
+  page = 1,
+): Promise<SimplifiedCommit[]> {
+  process.stdout.write(
+    `Finding all commits on branch "${branchName}" between ${baseCommit.sha}|${baseCommit.date} and ${headCommit.sha}|${headCommit.date}, page: ${page}\n`,
+  );
+  let commits = (
+    await octokit.request("GET /repos/{owner}/{repo}/commits", {
+      owner,
+      repo,
+      sha: branchName,
+      since: baseCommit.date,
+      until: headCommit.date,
+      page,
+      per_page: 100,
+    })
+  ).data.map(getSimplifiedCommit);
+  const resultsContainsHead = commits.some((c) => c.sha === headCommit.sha);
+  if (!resultsContainsHead) {
+    //need to get the next page as we haven't reached the head yet.
+    commits = commits.concat(
+      await findAllCommitsBetweenShas(
+        octokit,
+        branchName,
+        baseCommit,
+        headCommit,
+        page + 1,
+      ),
+    );
+  }
+  return commits;
+}
+
+/**
+ * Gets the specified commit by its SHA
+ */
+async function getCommit(octokit: Octokit, commitSha: string) {
+  const fullCommit = (
+    await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
+      owner,
+      repo,
+      commit_sha: commitSha,
+    })
+  ).data;
+  return getSimplifiedCommit(fullCommit);
+}
+/**
+ * strips out properties from the GitHub commit object to a simplified version for working with
+ */
+function getSimplifiedCommit(commit: Commit): SimplifiedCommit {
+  return {
+    sha: commit.sha,
+    message: commit.commit.message,
+    date: commit.commit.committer.date,
+  };
+}
+interface SimplifiedCommit {
+  sha: string;
+  message: string;
+  date: string;
 }
 
 export interface Commit {
