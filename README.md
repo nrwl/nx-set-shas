@@ -7,7 +7,10 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
 
 - [Example Usage](#example-usage)
 - [Configuration Options](#configuration-options)
+- [Permissions in v2+](#permissions-in-v2)
+- [Self-hosted runners](#self-hosted-runners)
 - [Background](#background)
+  - [Problem](#problem)
 - [License](#license)
 
 **NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
@@ -28,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     name: My Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
@@ -136,7 +139,7 @@ jobs:
       container: my-org/my-amazing-image:v1.2.3-fresh
     name: My Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
