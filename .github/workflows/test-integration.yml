@@ -24,3 +24,10 @@ jobs:
       working-directory: integration-test
       main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
       runs-on: ${{ matrix.runs-on }}
+
+  print-hello:
+    name: Print Hello
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Hello
+        run: echo "Hello, world!"
