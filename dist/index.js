@@ -37867,6 +37867,7 @@ const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
+const fallbackSHA = process.argv[8];
 const defaultWorkingDirectory = ".";
 const ProxifiedClient = action_1.Octokit.plugin(proxyPlugin);
 let BASE_SHA;
@@ -37913,17 +37914,23 @@ let BASE_SHA;
             else {
                 process.stdout.write("\n");
                 process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`);
-                process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
-                process.stdout.write("\n");
-                process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
-                process.stdout.write("\n");
-                const commitCountOutput = (0, child_process_1.spawnSync)("git", ["rev-list", "--count", `origin/${mainBranchName}`], { encoding: "utf-8" }).stdout;
-                const commitCount = parseInt(stripNewLineEndings(commitCountOutput), 10);
-                const LAST_COMMIT_CMD = `origin/${mainBranchName}${commitCount > 1 ? "~1" : ""}`;
-                const baseRes = (0, child_process_1.spawnSync)("git", ["rev-parse", LAST_COMMIT_CMD], {
-                    encoding: "utf-8",
-                });
-                BASE_SHA = baseRes.stdout;
+                if (fallbackSHA) {
+                    BASE_SHA = fallbackSHA;
+                    process.stdout.write(`Using provided fallback SHA: ${fallbackSHA}\n`);
+                }
+                else {
+                    process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
+                    process.stdout.write("\n");
+                    process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
+                    process.stdout.write("\n");
+                    const commitCountOutput = (0, child_process_1.spawnSync)("git", ["rev-list", "--count", `origin/${mainBranchName}`], { encoding: "utf-8" }).stdout;
+                    const commitCount = parseInt(stripNewLineEndings(commitCountOutput), 10);
+                    const LAST_COMMIT_CMD = `origin/${mainBranchName}${commitCount > 1 ? "~1" : ""}`;
+                    const baseRes = (0, child_process_1.spawnSync)("git", ["rev-parse", LAST_COMMIT_CMD], {
+                        encoding: "utf-8",
+                    });
+                    BASE_SHA = baseRes.stdout;
+                }
                 core.setOutput("noPreviousBuild", "true");
             }
         }
@@ -37977,7 +37984,10 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             owner,
             repo,
             // on some workflow runs we do not have branch property
-            branch: lastSuccessfulEvent === "push" || lastSuccessfulEvent === "workflow_dispatch" ? branch : undefined,
+            branch: lastSuccessfulEvent === "push" ||
+                lastSuccessfulEvent === "workflow_dispatch"
+                ? branch
+                : undefined,
             workflow_id,
             event: lastSuccessfulEvent,
             status: "success",
