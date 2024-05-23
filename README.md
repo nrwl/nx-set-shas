@@ -88,6 +88,11 @@ jobs:
     # Default: false
     error-on-no-successful-workflow: ""
 
+    # Fallback SHA to use if no successful workflow run is found. This can be useful in scenarios where you need a specific commit as a reference for comparison, especially in newly set up repositories or those with sparse workflow runs.
+    #
+    # Default: ""
+    fallback-sha: ""
+
     # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
     #
     # Default: push
