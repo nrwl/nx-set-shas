@@ -37867,15 +37867,8 @@ const errorOnNoSuccessfulWorkflow = process.argv[4];
 const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
-<<<<<<< HEAD
-<<<<<<< HEAD
 const fallbackSHA = process.argv[8];
-=======
-const getLastSkippedCommitAfterBase = process.argv[8];
->>>>>>> e270a80 (chore(skip-ci): creating input, cleanup)
-=======
-const getLastSkippedCommitAfterBase = process.argv[8] === "true" ? true : false;
->>>>>>> 2ac45cf (fix(skip-ci): updating command and bool parsing)
+const getLastSkippedCommitAfterBase = process.argv[9] === "true" ? true : false;
 const defaultWorkingDirectory = ".";
 const ProxifiedClient = action_1.Octokit.plugin(proxyPlugin);
 const messagesToSkip = [
@@ -37938,6 +37931,9 @@ let BASE_SHA;
             else {
                 process.stdout.write("\n");
                 process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`);
+                process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
+                process.stdout.write("\n");
+                process.stdout.write(`NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`);
                 if (fallbackSHA) {
                     BASE_SHA = fallbackSHA;
                     process.stdout.write(`Using provided fallback SHA: ${fallbackSHA}\n`);
@@ -38119,9 +38115,9 @@ function findLastSkippedCommitAfterSha(baseSha, headSha, messagesToSkip = [], br
                 newBaseSha = commit.sha;
                 continue;
             }
-            return commit.sha;
+            return commit.sha === headSha ? baseSha : commit.sha;
         }
-        return newBaseSha;
+        return newBaseSha === headSha ? baseSha : newBaseSha;
     });
 }
 /**
