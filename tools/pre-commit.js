@@ -41,6 +41,15 @@ try {
     );
   }
 
+  execSync(`npm run format`, {
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: {
+      ...process.env,
+      FORCE_COLOR: 'true',
+    },
+  });
+  console.log(` ✔ Formatted files`);
+
   console.log(`\n${chalk.bold(' Commit successful ')}\n`);
   process.exit(0);
 } catch (error) {

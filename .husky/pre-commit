@@ -4,4 +4,3 @@
 npx --no-install lint-staged --allow-empty
 
 node tools/pre-commit.js
-
