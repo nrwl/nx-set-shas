@@ -76,37 +76,37 @@ jobs:
     # Common names for this branch include main and master.
     #
     # Default: main
-    main-branch-name: ""
+    main-branch-name: ''
 
     # Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job.
     #
     # Default: true
-    set-environment-variables-for-job: ""
+    set-environment-variables-for-job: ''
 
     # By default, if no successful workflow run is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.
     #
     # Default: false
-    error-on-no-successful-workflow: ""
+    error-on-no-successful-workflow: ''
 
     # Fallback SHA to use if no successful workflow run is found. This can be useful in scenarios where you need a specific commit as a reference for comparison, especially in newly set up repositories or those with sparse workflow runs.
     #
     # Default: ""
-    fallback-sha: ""
+    fallback-sha: ''
 
     # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
     #
     # Default: push
-    last-successful-event: ""
+    last-successful-event: ''
 
     # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
     #
     # Default: .
-    working-directory: ""
+    working-directory: ''
 
     # The ID of the github action workflow to check for successful run or the name of the file name containing the workflow.
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
-    workflow-id: ""
+    workflow-id: ''
 ```
 
 <!-- end configuration-options -->
@@ -123,8 +123,8 @@ jobs:
     runs-on: ubuntu-latest
     name: My Job
     permissions:
-      contents: "read"
-      actions: "read"
+      contents: 'read'
+      actions: 'read'
 ```
 
 <!-- end permissions-in-v2 -->
