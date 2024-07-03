@@ -37978,9 +37978,7 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             process.stdout.write('\n');
             process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
         }
-        // fetch all workflow runs on a given repo/branch/workflow with push and success
-        const shas = yield octokit
-            .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
+        const workflowRunsFetchParams = {
             owner,
             repo,
             // on some workflow runs we do not have branch property
@@ -37991,6 +37989,34 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             workflow_id,
             event: lastSuccessfulEvent,
             status: 'success',
+        };
+        function printObjectOneLine(obj) {
+            let result = '';
+            for (const [key, value] of Object.entries(obj)) {
+                result += `${key}: ${value}, `;
+            }
+            // Remove the trailing comma and space
+            result = result.slice(0, -2);
+            console.log(result);
+        }
+        process.stdout.write('\n');
+        process.stdout.write(`workflowRunsFetchParams\n`);
+        process.stdout.write(`${printObjectOneLine(workflowRunsFetchParams)}`);
+        // fetch all workflow runs on a given repo/branch/workflow with push and success
+        const shas = yield octokit
+            .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, workflowRunsFetchParams)
+            .then(({ data: { workflow_runs } }) => {
+            process.stdout.write('\n');
+            process.stdout.write(`workfflow runs fetch result:\n`);
+            workflow_runs.forEach((run) => {
+                process.stdout.write(JSON.stringify({
+                    head_branch: run.head_branch,
+                    head_sha: run.head_sha,
+                    event: run.event,
+                    status: run.status,
+                }));
+            });
+            return workflow_runs;
         })
             .then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
         return yield findExistingCommit(octokit, branch, shas);
