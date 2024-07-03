@@ -208,7 +208,7 @@ async function findSuccessfulCommit(
     )
     .then(({ data: { workflow_runs } }) => {
       process.stdout.write('\n');
-      process.stdout.write(`workfflow runs fetch result:\n`);
+      process.stdout.write(`workflow runs fetch result:\n`);
       workflow_runs.forEach((run) => {
         process.stdout.write(
           JSON.stringify({

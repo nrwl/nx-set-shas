@@ -38007,7 +38007,7 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, workflowRunsFetchParams)
             .then(({ data: { workflow_runs } }) => {
             process.stdout.write('\n');
-            process.stdout.write(`workfflow runs fetch result:\n`);
+            process.stdout.write(`workflow runs fetch result:\n`);
             workflow_runs.forEach((run) => {
                 process.stdout.write(JSON.stringify({
                     head_branch: run.head_branch,
