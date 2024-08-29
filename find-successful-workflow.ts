@@ -85,32 +85,40 @@ let BASE_SHA: string;
           BASE_SHA = fallbackSHA;
           process.stdout.write(`Using provided fallback SHA: ${fallbackSHA}\n`);
         } else {
-          process.stdout.write(
-            `We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`,
-          );
+          // Check if HEAD~1 exists, and if not, set BASE_SHA to the empty tree hash
+          const LAST_COMMIT_CMD = `origin/${mainBranchName}~1`;
+
+          const baseRes = spawnSync('git', ['rev-parse', LAST_COMMIT_CMD], {
+            encoding: 'utf-8',
+          });
+
+          if (baseRes.status !== 0 || !baseRes.stdout) {
+            const emptyTreeRes = spawnSync(
+              'git',
+              ['hash-object', '-t', 'tree', '/dev/null'],
+              {
+                encoding: 'utf-8',
+              },
+            );
+            // 4b825dc642cb6eb9a060e54bf8d69288fbee4904 is the expected result of hashing the empty tree
+            BASE_SHA =
+              emptyTreeRes.stdout ?? `4b825dc642cb6eb9a060e54bf8d69288fbee4904`;
+            process.stdout.write(
+              `HEAD~1 does not exist. We are therefore defaulting to use the empty git tree hash as BASE.\n`,
+            );
+          } else {
+            process.stdout.write(
+              `We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`,
+            );
+
+            BASE_SHA = baseRes.stdout;
+          }
+
           process.stdout.write('\n');
           process.stdout.write(
             `NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`,
           );
           process.stdout.write('\n');
-
-          const commitCountOutput = spawnSync(
-            'git',
-            ['rev-list', '--count', `origin/${mainBranchName}`],
-            { encoding: 'utf-8' },
-          ).stdout;
-          const commitCount = parseInt(
-            stripNewLineEndings(commitCountOutput),
-            10,
-          );
-
-          const LAST_COMMIT_CMD = `origin/${mainBranchName}${
-            commitCount > 1 ? '~1' : ''
-          }`;
-          const baseRes = spawnSync('git', ['rev-parse', LAST_COMMIT_CMD], {
-            encoding: 'utf-8',
-          });
-          BASE_SHA = baseRes.stdout;
         }
         core.setOutput('noPreviousBuild', 'true');
       }
