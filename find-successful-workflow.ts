@@ -1,10 +1,10 @@
-import * as core from "@actions/core";
-import * as github from "@actions/github";
-import { Octokit } from "@octokit/action";
-import { spawnSync } from "child_process";
-import { existsSync } from "fs";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { getProxyForUrl } from "proxy-from-env";
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { Octokit } from '@octokit/action';
+import { spawnSync } from 'child_process';
+import { existsSync } from 'fs';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { getProxyForUrl } from 'proxy-from-env';
 
 const {
   runId,
@@ -18,7 +18,7 @@ const lastSuccessfulEvent = process.argv[5];
 const workingDirectory = process.argv[6];
 const workflowId = process.argv[7];
 const fallbackSHA = process.argv[8];
-const defaultWorkingDirectory = ".";
+const defaultWorkingDirectory = '.';
 
 const ProxifiedClient = Octokit.plugin(proxyPlugin);
 
@@ -28,34 +28,34 @@ let BASE_SHA: string;
     if (existsSync(workingDirectory)) {
       process.chdir(workingDirectory);
     } else {
-      process.stdout.write("\n");
+      process.stdout.write('\n');
       process.stdout.write(
         `WARNING: Working directory '${workingDirectory}' doesn't exist.\n`,
       );
     }
   }
 
-  const headResult = spawnSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf-8",
+  const headResult = spawnSync('git', ['rev-parse', 'HEAD'], {
+    encoding: 'utf-8',
   });
   const HEAD_SHA = headResult.stdout;
 
   if (
-    ["pull_request", "pull_request_target"].includes(eventName) &&
+    ['pull_request', 'pull_request_target'].includes(eventName) &&
     !github.context.payload.pull_request.merged
   ) {
-    const baseResult = spawnSync("git", [
-      "merge-base",
-      `origin/${mainBranchName}`,
-      "HEAD",
-    ], { encoding: "utf-8" });
+    const baseResult = spawnSync(
+      'git',
+      ['merge-base', `origin/${mainBranchName}`, 'HEAD'],
+      { encoding: 'utf-8' },
+    );
     BASE_SHA = baseResult.stdout;
-  } else if (eventName == "merge_group") {
+  } else if (eventName == 'merge_group') {
     // merge queue get the last commit before yours and make that your base diff;
     // anything ahead that fails will fail your run so no need to run there stuff too.
     // TODO: Check for last failed run in main and make that the base for the HEAD of MQ
-    const baseResult = spawnSync("git", ["rev-parse", "HEAD~1"], {
-      encoding: "utf-8",
+    const baseResult = spawnSync('git', ['rev-parse', 'HEAD^1'], {
+      encoding: 'utf-8',
     });
     BASE_SHA = baseResult.stdout;
   } else {
@@ -74,11 +74,11 @@ let BASE_SHA: string;
     }
 
     if (!BASE_SHA) {
-      if (errorOnNoSuccessfulWorkflow === "true") {
+      if (errorOnNoSuccessfulWorkflow === 'true') {
         reportFailure(mainBranchName);
         return;
       } else {
-        process.stdout.write("\n");
+        process.stdout.write('\n');
         process.stdout.write(
           `WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`,
         );
@@ -89,21 +89,21 @@ let BASE_SHA: string;
           // Check if HEAD~1 exists, and if not, set BASE_SHA to the empty tree hash
           const LAST_COMMIT_CMD = `origin/${mainBranchName}~1`;
 
-          const baseRes = spawnSync("git", ["rev-parse", LAST_COMMIT_CMD], {
-            encoding: "utf-8",
+          const baseRes = spawnSync('git', ['rev-parse', LAST_COMMIT_CMD], {
+            encoding: 'utf-8',
           });
 
           if (baseRes.status !== 0 || !baseRes.stdout) {
             const emptyTreeRes = spawnSync(
-              "git",
-              ["hash-object", "-t", "tree", "/dev/null"],
+              'git',
+              ['hash-object', '-t', 'tree', '/dev/null'],
               {
-                encoding: "utf-8",
+                encoding: 'utf-8',
               },
             );
             // 4b825dc642cb6eb9a060e54bf8d69288fbee4904 is the expected result of hashing the empty tree
-            BASE_SHA = emptyTreeRes.stdout ??
-              `4b825dc642cb6eb9a060e54bf8d69288fbee4904`;
+            BASE_SHA =
+              emptyTreeRes.stdout ?? `4b825dc642cb6eb9a060e54bf8d69288fbee4904`;
             process.stdout.write(
               `HEAD~1 does not exist. We are therefore defaulting to use the empty git tree hash as BASE.\n`,
             );
@@ -115,24 +115,24 @@ let BASE_SHA: string;
             BASE_SHA = baseRes.stdout;
           }
 
-          process.stdout.write("\n");
+          process.stdout.write('\n');
           process.stdout.write(
             `NOTE: You can instead make this a hard error by setting 'error-on-no-successful-workflow' on the action in your workflow.\n`,
           );
-          process.stdout.write("\n");
+          process.stdout.write('\n');
         }
-        core.setOutput("noPreviousBuild", "true");
+        core.setOutput('noPreviousBuild', 'true');
       }
     } else {
-      process.stdout.write("\n");
+      process.stdout.write('\n');
       process.stdout.write(
         `Found the last successful workflow run on 'origin/${mainBranchName}'\n`,
       );
       process.stdout.write(`Commit: ${BASE_SHA}\n`);
     }
   }
-  core.setOutput("base", stripNewLineEndings(BASE_SHA));
-  core.setOutput("head", stripNewLineEndings(HEAD_SHA));
+  core.setOutput('base', stripNewLineEndings(BASE_SHA));
+  core.setOutput('head', stripNewLineEndings(HEAD_SHA));
 })();
 
 function reportFailure(branchName: string): void {
@@ -146,7 +146,7 @@ function reportFailure(branchName: string): void {
 }
 
 function proxyPlugin(octokit: Octokit): void {
-  octokit.hook.before("request", (options) => {
+  octokit.hook.before('request', (options) => {
     const proxy: URL = getProxyForUrl(options.baseUrl);
     if (proxy) {
       options.request.agent = new HttpsProxyAgent(proxy);
@@ -175,7 +175,7 @@ async function findSuccessfulCommit(
         run_id,
       })
       .then(({ data: { workflow_id } }) => workflow_id);
-    process.stdout.write("\n");
+    process.stdout.write('\n');
     process.stdout.write(
       `Workflow Id not provided. Using workflow '${workflow_id}'\n`,
     );
@@ -188,17 +188,18 @@ async function findSuccessfulCommit(
         owner,
         repo,
         // on some workflow runs we do not have branch property
-        branch: lastSuccessfulEvent === "push" ||
-            lastSuccessfulEvent === "workflow_dispatch"
-          ? branch
-          : undefined,
+        branch:
+          lastSuccessfulEvent === 'push' ||
+          lastSuccessfulEvent === 'workflow_dispatch'
+            ? branch
+            : undefined,
         workflow_id,
         event: lastSuccessfulEvent,
-        status: "success",
+        status: 'success',
       },
     )
     .then(({ data: { workflow_runs } }) =>
-      workflow_runs.map((run: { head_sha: any }) => run.head_sha)
+      workflow_runs.map((run: { head_sha: any }) => run.head_sha),
     );
 
   return await findExistingCommit(octokit, branch, shas);
@@ -229,19 +230,19 @@ async function commitExists(
   commitSha: string,
 ): Promise<boolean> {
   try {
-    spawnSync("git", ["cat-file", "-e", commitSha], {
-      stdio: ["pipe", "pipe", null],
+    spawnSync('git', ['cat-file', '-e', commitSha], {
+      stdio: ['pipe', 'pipe', null],
     });
 
     // Check the commit exists in general
-    await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
+    await octokit.request('GET /repos/{owner}/{repo}/commits/{commit_sha}', {
       owner,
       repo,
       commit_sha: commitSha,
     });
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request("GET /repos/{owner}/{repo}/commits", {
+    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
       owner,
       repo,
       sha: branchName,
@@ -260,5 +261,5 @@ async function commitExists(
  * Strips LF line endings from given string
  */
 function stripNewLineEndings(string: string): string {
-  return string.replace("\n", "");
+  return string.replace('\n', '');
 }
