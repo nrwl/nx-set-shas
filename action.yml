@@ -54,11 +54,17 @@ runs:
     - name: Log base and head SHAs used for nx affected
       shell: bash
       run: |
+        echo "Avilable Commits"
+        git log --oneline main..HEAD
         echo "Base SHA"
+        echo ""
         echo ${{ steps.setSHAs.outputs.base }}
         echo ""
         echo "Head SHA"
         echo ${{ steps.setSHAs.outputs.head }}
+        echo ""
+        echo "Affected commits"
+        git log --oneline ${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}
         echo ""
 
     - name: Optionally set the derived SHAs as NX_BASE and NX_HEAD environment variables for the current job
