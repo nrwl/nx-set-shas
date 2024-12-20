@@ -51,7 +51,10 @@ let BASE_SHA: string;
     ], { encoding: "utf-8" });
     BASE_SHA = baseResult.stdout;
   } else if (eventName == "merge_group") {
-    const baseResult = spawnSync("git", ["rev-parse", "HEAD^1"], {
+    // merge queue get the last commit before yours and make that your base diff;
+    // anything ahead that fails will fail your run so no need to run there stuff too.
+    // TODO: Check for last failed run in main and make that the base for the HEAD of MQ
+    const baseResult = spawnSync("git", ["rev-parse", "HEAD~1"], {
       encoding: "utf-8",
     });
     BASE_SHA = baseResult.stdout;
