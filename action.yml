@@ -31,6 +31,9 @@ outputs:
   head:
     description: The value intended for use with --head or NX_HEAD in all subsequent `nx affected` commands within the current workflow
     value: ${{ steps.setSHAs.outputs.head }}
+  base-deploy:
+    description: The value intended for use with --base `nx affected` commands within the current workflow; useful when you want to see all changes + main in the merge ref
+    value: ${{ steps.setSHAs.outputs.base-deploy }}
   noPreviousBuild:
     description: "Used to check if a previous run was found in order to perform additional logic later on in your workflow, the only possible values is the string 'true', otherwise it won't be set"
     value: ${{ steps.setSHAs.outputs.noPreviousBuild }}
@@ -61,8 +64,14 @@ runs:
         echo "Head SHA"
         echo ${{ steps.setSHAs.outputs.head }}
         echo ""
+        echo "Base Depoy SHA"
+        echo ${{ steps.setSHAs.outputs.base-deploy }}
+        echo ""
         echo "Affected commits"
         git log --oneline ${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }} || true
+        echo ""
+        echo "Affected Deploy commits"
+        git log --oneline ${{ steps.setSHAs.outputs.base-deploy }}..${{ steps.setSHAs.outputs.head }} || true
         echo ""
 
     - name: Optionally set the derived SHAs as NX_BASE and NX_HEAD environment variables for the current job
@@ -71,7 +80,8 @@ runs:
       run: |
         echo "NX_BASE=${{ steps.setSHAs.outputs.base }}" >> $GITHUB_ENV
         echo "NX_HEAD=${{ steps.setSHAs.outputs.head }}" >> $GITHUB_ENV
-        echo "NX_BASE and NX_HEAD environment variables have been set for the current Job"
+        echo "NX_BASE_DEPLOY=${{ steps.setSHAs.outputs.base-deploy }}" >> $GITHUB_ENV
+        echo "NX_BASE, NX_HEAD, NX_BASE_DEPLOY environment variables have been set for the current Job"
 branding:
   icon: 'terminal'
   color: 'blue'

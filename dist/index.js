@@ -64880,6 +64880,7 @@ const fallbackSHA = process.argv[8];
 const defaultWorkingDirectory = '.';
 const ProxifiedClient = action_1.Octokit.plugin(proxyPlugin);
 let BASE_SHA;
+let BASE_DEPLOY_SHA;
 (() => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     if (workingDirectory !== defaultWorkingDirectory) {
@@ -64899,6 +64900,16 @@ let BASE_SHA;
         !github.context.payload.pull_request.merged) {
         const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
         BASE_SHA = baseResult.stdout;
+        const ref = github.context.ref; // e.g., "refs/heads/main"
+        const branch = ref.startsWith('refs/heads/')
+            ? ref.replace('refs/heads/', '')
+            : '';
+        const deployResult = yield findSuccessfulBranchDeployment(owner, repo, branch);
+        BASE_DEPLOY_SHA = deployResult;
+        if (!deployResult) {
+            const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, `origin/${branch}`], { encoding: 'utf-8' });
+            BASE_DEPLOY_SHA = baseResult.stdout;
+        }
     }
     else if (eventName == 'merge_group') {
         // merge queue get the last commit before yours and make that your base diff;
@@ -64963,6 +64974,7 @@ let BASE_SHA;
     }
     core.setOutput('base', stripNewLineEndings(BASE_SHA));
     core.setOutput('head', stripNewLineEndings(HEAD_SHA));
+    core.setOutput('base-deploy', stripNewLineEndings(BASE_DEPLOY_SHA));
 }))();
 function reportFailure(branchName) {
     core.setFailed(`
@@ -65064,6 +65076,63 @@ function commitExists(octokit, branchName, commitSha) {
  */
 function stripNewLineEndings(string) {
     return string.replace('\n', '');
+}
+/**
+ * Find last successful deployment on the branch
+ */
+function findSuccessfulBranchDeployment(owner, repo, branch) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const octokit = new ProxifiedClient();
+        // GraphQL query to get deployments and their statuses
+        const query = `
+      query($owner: String!, $repo: String!, $branch: String!) {
+        repository(owner: $owner, name: $repo) {
+          deployments(last: 50, environments: ["production"], refName: $branch) {
+            nodes {
+              id
+              createdAt
+              environment
+              ref {
+                name
+              }
+              latestStatus {
+                state
+                createdAt
+              }
+              commit {
+                oid
+                message
+              }
+            }
+          }
+        }
+      }
+    `;
+        // Execute the GraphQL query
+        const response = yield octokit.graphql(query, {
+            owner,
+            repo,
+            branch: `refs/heads/${branch}`,
+        });
+        const deployments = response.repository.deployments.nodes;
+        // Find the last successful deployment
+        const successfulDeployment = deployments.find((deployment) => { var _a; return ((_a = deployment.latestStatus) === null || _a === void 0 ? void 0 : _a.state) === 'SUCCESS'; });
+        if (successfulDeployment) {
+            core.info(`Found successful deployment for branch ${branch}:`);
+            core.info(`ID: ${successfulDeployment.id}`);
+            core.info(`Environment: ${successfulDeployment.environment}`);
+            core.info(`Created at: ${successfulDeployment.createdAt}`);
+            if (successfulDeployment.commit) {
+                core.info(`Git SHA: ${successfulDeployment.commit.oid}`);
+                core.info(`Commit Message: ${successfulDeployment.commit.message}`);
+                return successfulDeployment.commit.oid;
+            }
+        }
+        else {
+            core.info(`No successful deployments found for branch: ${branch}`);
+        }
+        return undefined;
+    });
 }
 
 
