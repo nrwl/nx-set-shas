@@ -14,7 +14,9 @@ on:
       working-directory:
         required: false
         type: string
-
+      workflow-id:
+        required: true
+        type: string
 jobs:
   main:
     runs-on: ${{ inputs.runs-on }}
@@ -43,6 +45,7 @@ jobs:
         uses: ./
         with:
           main-branch-name: ${{ inputs.main-branch-name }}
+          workflow-id: ${{ inputs.workflow-id }}  
 
       - name: Verify default PR Workflow
         if: ${{ github.event_name == 'pull_request' }}
@@ -63,3 +66,10 @@ jobs:
           HEAD_SHA=$(echo $(git rev-parse HEAD))
           node -e "if(process.env.NX_BASE == '${BASE_SHA}') console.log('Base set correctly'); else { throw new Error('Base not set correctly!');}"
           node -e "if(process.env.NX_HEAD == '${HEAD_SHA}') console.log('Head set correctly'); else { throw new Error('Head not set correctly!');}"
+      
+      - name: Verify workflow-id
+        if: ${{ inputs.workflow-id != '' }}
+        run: |
+          echo "NX_BASE: $NX_BASE"
+          echo "NX_HEAD: $NX_HEAD"
+          echo "NX_WORKFLOW_ID: $NX_WORKFLOW_ID"  
