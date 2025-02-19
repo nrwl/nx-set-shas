@@ -65004,21 +65004,26 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             }
         }
         // fetch all workflow runs on a given repo/branch/workflow with push and success
-        const shas = yield octokit
-            .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
-            owner,
-            repo,
-            // on some workflow runs we do not have branch property
-            branch: lastSuccessfulEvent === 'push' ||
-                lastSuccessfulEvent === 'workflow_dispatch'
-                ? branch
-                : undefined,
-            workflow_id,
-            event: lastSuccessfulEvent,
-            status: 'success',
-        })
-            .then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
-        return yield findExistingCommit(octokit, branch, shas);
+        try {
+            const response = yield octokit.request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
+                owner,
+                repo,
+                // on some workflow runs we do not have branch property
+                branch: lastSuccessfulEvent === 'push' ||
+                    lastSuccessfulEvent === 'workflow_dispatch'
+                    ? branch
+                    : undefined,
+                workflow_id,
+                event: lastSuccessfulEvent,
+                status: 'success',
+            });
+            const shas = response.data.workflow_runs.map((run) => run.head_sha);
+            return yield findExistingCommit(octokit, branch, shas);
+        }
+        catch (e) {
+            console.error('Error fetching workflow runs', e);
+            throw e;
+        }
     });
 }
 function findMergeBaseRef() {
@@ -65046,8 +65051,14 @@ function findMergeQueueBranch() {
         process.stdout.write('\n');
         process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
         const octokit = new ProxifiedClient();
-        const result = yield octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
-        return result.data.head.ref;
+        try {
+            const result = yield octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
+            return result.data.head.ref;
+        }
+        catch (e) {
+            console.error('Error fetching merge queue branch', e);
+            throw e;
+        }
     });
 }
 /**

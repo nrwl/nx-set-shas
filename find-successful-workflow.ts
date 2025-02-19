@@ -187,8 +187,8 @@ async function findSuccessfulCommit(
     }
   }
   // fetch all workflow runs on a given repo/branch/workflow with push and success
-  const shas = await octokit
-    .request(
+  try {
+    const response = await octokit.request(
       `GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`,
       {
         owner,
@@ -203,12 +203,16 @@ async function findSuccessfulCommit(
         event: lastSuccessfulEvent,
         status: 'success',
       },
-    )
-    .then(({ data: { workflow_runs } }) =>
-      workflow_runs.map((run: { head_sha: any }) => run.head_sha),
+    );
+    const shas = response.data.workflow_runs.map(
+      (run: { head_sha: any }) => run.head_sha,
     );
 
-  return await findExistingCommit(octokit, branch, shas);
+    return await findExistingCommit(octokit, branch, shas);
+  } catch (e) {
+    console.error('Error fetching workflow runs', e);
+    throw e;
+  }
 }
 
 async function findMergeBaseRef(): Promise<string> {
@@ -236,11 +240,17 @@ async function findMergeQueueBranch(): Promise<string> {
   process.stdout.write('\n');
   process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
   const octokit = new ProxifiedClient();
-  const result = await octokit.request(
-    `GET /repos/${owner}/${repo}/pulls/${pull_number}`,
-    { owner, repo, pull_number: +pull_number },
-  );
-  return result.data.head.ref;
+
+  try {
+    const result = await octokit.request(
+      `GET /repos/${owner}/${repo}/pulls/${pull_number}`,
+      { owner, repo, pull_number: +pull_number },
+    );
+    return result.data.head.ref;
+  } catch (e) {
+    console.error('Error fetching merge queue branch', e);
+    throw e;
+  }
 }
 
 /**
