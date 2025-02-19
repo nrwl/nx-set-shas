@@ -24,4 +24,4 @@ jobs:
       working-directory: integration-test
       main-branch-name: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
       runs-on: ${{ matrix.runs-on }}
-      workflow-id: foo-bar
+      workflow-id: ${{ github.workflow }}
