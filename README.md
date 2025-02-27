@@ -94,12 +94,12 @@ jobs:
     fallback-sha: ""
 
     # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
+    # The property can also contain several types separated by a comma i.e. schedule,workflow_dispatch
     #
     # Default: push
     last-successful-event: ""
 
     # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
-    # The property can also contain several types separated by comma i.e. schedule,workflow_dispatch
     #
     # Default: .
     working-directory: ""
