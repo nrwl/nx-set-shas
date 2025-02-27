@@ -64870,13 +64870,12 @@ const fs_1 = __nccwpck_require__(7147);
 const https_proxy_agent_1 = __nccwpck_require__(7219);
 const proxy_from_env_1 = __nccwpck_require__(3329);
 const { runId, repo: { repo, owner }, eventName, } = github.context;
-process.env.GITHUB_TOKEN = process.argv[2];
-const mainBranchName = process.argv[3];
-const errorOnNoSuccessfulWorkflow = process.argv[4];
-const lastSuccessfulEvent = process.argv[5];
-const workingDirectory = process.argv[6];
-const workflowId = process.argv[7];
-const fallbackSHA = process.argv[8];
+const mainBranchName = core.getInput('main-branch-name');
+const errorOnNoSuccessfulWorkflow = core.getBooleanInput('error-on-no-successful-workflow');
+const lastSuccessfulEvent = core.getInput('last-successful-event');
+const workingDirectory = core.getInput('working-directory');
+const workflowId = core.getInput('workflow-id');
+const fallbackSHA = core.getInput('fallback-sha');
 const defaultWorkingDirectory = '.';
 const ProxifiedClient = action_1.Octokit.plugin(proxyPlugin);
 let BASE_SHA;
@@ -64894,7 +64893,7 @@ let BASE_SHA;
     const headResult = (0, child_process_1.spawnSync)('git', ['rev-parse', 'HEAD'], {
         encoding: 'utf-8',
     });
-    const HEAD_SHA = headResult.stdout;
+    let HEAD_SHA = headResult.stdout;
     if ((['pull_request', 'pull_request_target'].includes(eventName) &&
         !github.context.payload.pull_request.merged) ||
         eventName == 'merge_group') {
@@ -64917,7 +64916,7 @@ let BASE_SHA;
             return;
         }
         if (!BASE_SHA) {
-            if (errorOnNoSuccessfulWorkflow === 'true') {
+            if (errorOnNoSuccessfulWorkflow) {
                 reportFailure(mainBranchName);
                 return;
             }
@@ -64960,8 +64959,24 @@ let BASE_SHA;
             process.stdout.write(`Commit: ${BASE_SHA}\n`);
         }
     }
-    core.setOutput('base', stripNewLineEndings(BASE_SHA));
-    core.setOutput('head', stripNewLineEndings(HEAD_SHA));
+    BASE_SHA = stripNewLineEndings(BASE_SHA);
+    HEAD_SHA = stripNewLineEndings(HEAD_SHA);
+    // Log base and head SHAs used for nx affected
+    process.stdout.write('\n');
+    process.stdout.write('Base SHA');
+    process.stdout.write(BASE_SHA);
+    process.stdout.write('\n');
+    process.stdout.write('Head SHA');
+    process.stdout.write(HEAD_SHA);
+    process.stdout.write('\n');
+    // Optionally set the derived SHAs as NX_BASE and NX_HEAD environment variables for the current job
+    if (core.getBooleanInput('set-environment-variables-for-job')) {
+        core.exportVariable('NX_BASE', BASE_SHA);
+        core.exportVariable('NX_HEAD', HEAD_SHA);
+        process.stdout.write('NX_BASE and NX_HEAD environment variables have been set for the current Job');
+    }
+    core.setOutput('base', BASE_SHA);
+    core.setOutput('head', HEAD_SHA);
 }))();
 function reportFailure(branchName) {
     core.setFailed(`
