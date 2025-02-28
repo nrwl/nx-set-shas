@@ -41,11 +41,20 @@ let BASE_SHA: string;
   });
   let HEAD_SHA = headResult.stdout;
 
-  if (['pull_request', 'pull_request_target'].includes(eventName) && !github.context.payload.pull_request.merged) {
-    const baseResult = spawnSync('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
+  if (
+    ['pull_request', 'pull_request_target'].includes(eventName) &&
+    !github.context.payload.pull_request.merged
+  ) {
+    const baseResult = spawnSync(
+      'git',
+      ['merge-base', `origin/${mainBranchName}`, 'HEAD'],
+      { encoding: 'utf-8' },
+    );
     BASE_SHA = baseResult.stdout;
-  } else if (eventName == "merge_group") {
-    const baseResult = spawnSync('git', ['rev-parse', 'HEAD^1'], { encoding: 'utf-8' });
+  } else if (eventName == 'merge_group') {
+    const baseResult = spawnSync('git', ['rev-parse', 'HEAD^1'], {
+      encoding: 'utf-8',
+    });
     BASE_SHA = baseResult.stdout;
   } else {
     try {
