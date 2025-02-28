@@ -42,22 +42,20 @@ let BASE_SHA: string;
   let HEAD_SHA = headResult.stdout;
 
   if (
-    (['pull_request', 'pull_request_target'].includes(eventName) &&
-      !github.context.payload.pull_request.merged) ||
-    eventName == 'merge_group'
+    ['pull_request', 'pull_request_target'].includes(eventName) &&
+    !github.context.payload.pull_request.merged
   ) {
-    try {
-      const mergeBaseRef = await findMergeBaseRef();
-      const baseResult = spawnSync(
-        'git',
-        ['merge-base', `origin/${mainBranchName}`, mergeBaseRef],
-        { encoding: 'utf-8' },
-      );
-      BASE_SHA = baseResult.stdout;
-    } catch (e) {
-      core.setFailed(e.message);
-      return;
-    }
+    const baseResult = spawnSync(
+      'git',
+      ['merge-base', `origin/${mainBranchName}`, 'HEAD'],
+      { encoding: 'utf-8' },
+    );
+    BASE_SHA = baseResult.stdout;
+  } else if (eventName == 'merge_group') {
+    const baseResult = spawnSync('git', ['rev-parse', 'HEAD^1'], {
+      encoding: 'utf-8',
+    });
+    BASE_SHA = baseResult.stdout;
   } else {
     try {
       BASE_SHA = await findSuccessfulCommit(
@@ -225,38 +223,6 @@ async function findSuccessfulCommit(
     );
 
   return await findExistingCommit(octokit, branch, shas);
-}
-
-async function findMergeBaseRef(): Promise<string> {
-  if (eventName == 'merge_group') {
-    const mergeQueueBranch = await findMergeQueueBranch();
-    return `origin/${mergeQueueBranch}`;
-  } else {
-    return 'HEAD';
-  }
-}
-
-function findMergeQueuePr(): string {
-  const { head_ref, base_sha } = github.context.payload.merge_group;
-  const result = new RegExp(
-    `^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`,
-  ).exec(head_ref);
-  return result ? result.at(1) : undefined;
-}
-
-async function findMergeQueueBranch(): Promise<string> {
-  const pull_number = findMergeQueuePr();
-  if (!pull_number) {
-    throw new Error('Failed to determine PR number');
-  }
-  process.stdout.write('\n');
-  process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
-  const octokit = new ProxifiedClient();
-  const result = await octokit.request(
-    `GET /repos/${owner}/${repo}/pulls/${pull_number}`,
-    { owner, repo, pull_number: +pull_number },
-  );
-  return result.data.head.ref;
 }
 
 /**

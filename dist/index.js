@@ -64894,18 +64894,16 @@ let BASE_SHA;
         encoding: 'utf-8',
     });
     let HEAD_SHA = headResult.stdout;
-    if ((['pull_request', 'pull_request_target'].includes(eventName) &&
-        !github.context.payload.pull_request.merged) ||
-        eventName == 'merge_group') {
-        try {
-            const mergeBaseRef = yield findMergeBaseRef();
-            const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, mergeBaseRef], { encoding: 'utf-8' });
-            BASE_SHA = baseResult.stdout;
-        }
-        catch (e) {
-            core.setFailed(e.message);
-            return;
-        }
+    if (['pull_request', 'pull_request_target'].includes(eventName) &&
+        !github.context.payload.pull_request.merged) {
+        const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
+        BASE_SHA = baseResult.stdout;
+    }
+    else if (eventName == 'merge_group') {
+        const baseResult = (0, child_process_1.spawnSync)('git', ['rev-parse', 'HEAD^1'], {
+            encoding: 'utf-8',
+        });
+        BASE_SHA = baseResult.stdout;
     }
     else {
         try {
@@ -65029,35 +65027,6 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
         })
             .then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
         return yield findExistingCommit(octokit, branch, shas);
-    });
-}
-function findMergeBaseRef() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (eventName == 'merge_group') {
-            const mergeQueueBranch = yield findMergeQueueBranch();
-            return `origin/${mergeQueueBranch}`;
-        }
-        else {
-            return 'HEAD';
-        }
-    });
-}
-function findMergeQueuePr() {
-    const { head_ref, base_sha } = github.context.payload.merge_group;
-    const result = new RegExp(`^refs/heads/gh-readonly-queue/${mainBranchName}/pr-(\\d+)-${base_sha}$`).exec(head_ref);
-    return result ? result.at(1) : undefined;
-}
-function findMergeQueueBranch() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const pull_number = findMergeQueuePr();
-        if (!pull_number) {
-            throw new Error('Failed to determine PR number');
-        }
-        process.stdout.write('\n');
-        process.stdout.write(`Found PR #${pull_number} from merge queue branch\n`);
-        const octokit = new ProxifiedClient();
-        const result = yield octokit.request(`GET /repos/${owner}/${repo}/pulls/${pull_number}`, { owner, repo, pull_number: +pull_number });
-        return result.data.head.ref;
     });
 }
 /**
