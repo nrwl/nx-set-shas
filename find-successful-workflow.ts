@@ -11,6 +11,7 @@ const {
   repo: { repo, owner },
   eventName,
 } = github.context;
+process.env.GITHUB_TOKEN = core.getInput('gh-token');
 const mainBranchName = core.getInput('main-branch-name');
 const errorOnNoSuccessfulWorkflow = core.getBooleanInput(
   'error-on-no-successful-workflow',
