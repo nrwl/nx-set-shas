@@ -2,9 +2,6 @@ name: 'Nx set SHAs'
 description: 'Derives SHAs for base and head for use in nx affected commands, optionally setting them as env variables for the current job'
 
 inputs:
-  token:
-    description: 'The GitHub token used to perform git operations'
-    default: ${{ github.token }}
   main-branch-name:
     description: 'The name of the main branch in your repo, used as the target of PRs. E.g. main, master etc'
     default: 'main'
