@@ -23,10 +23,7 @@
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@actions/github": "^5.1.1",
-    "@octokit/action": "^6.1.0",
-    "https-proxy-agent": "7.0.2",
-    "proxy-from-env": "1.1.0"
+    "@actions/github": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.2",

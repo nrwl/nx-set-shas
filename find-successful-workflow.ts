@@ -1,10 +1,8 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { Octokit } from '@octokit/action';
 import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { getProxyForUrl } from 'proxy-from-env';
+import { GitHub } from '@actions/github/lib/utils';
 
 const {
   runId,
@@ -21,8 +19,6 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const defaultWorkingDirectory = '.';
-
-const ProxifiedClient = Octokit.plugin(proxyPlugin);
 
 let BASE_SHA: string;
 (async () => {
@@ -166,15 +162,6 @@ function reportFailure(branchName: string): void {
     - If no, then you might have changed your git history and those commits no longer exist.`);
 }
 
-function proxyPlugin(octokit: Octokit): void {
-  octokit.hook.before('request', (options) => {
-    const proxy: URL = getProxyForUrl(options.baseUrl);
-    if (proxy) {
-      options.request.agent = new HttpsProxyAgent(proxy);
-    }
-  });
-}
-
 /**
  * Find last successful workflow run on the repo
  */
@@ -186,7 +173,7 @@ async function findSuccessfulCommit(
   branch: string,
   lastSuccessfulEvent: string,
 ): Promise<string | undefined> {
-  const octokit = new ProxifiedClient();
+  const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
     workflow_id = await octokit
       .request(`GET /repos/${owner}/${repo}/actions/runs/${run_id}`, {
@@ -230,7 +217,7 @@ async function findSuccessfulCommit(
  * Get first existing commit
  */
 async function findExistingCommit(
-  octokit: Octokit,
+  octokit: InstanceType<typeof GitHub>,
   branchName: string,
   shas: string[],
 ): Promise<string | undefined> {
@@ -246,7 +233,7 @@ async function findExistingCommit(
  * Check if given commit is valid
  */
 async function commitExists(
-  octokit: Octokit,
+  octokit: InstanceType<typeof GitHub>,
   branchName: string,
   commitSha: string,
 ): Promise<boolean> {
