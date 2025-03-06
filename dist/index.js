@@ -29960,7 +29960,11 @@ let BASE_SHA;
     let HEAD_SHA = headResult.stdout;
     if (['pull_request', 'pull_request_target'].includes(eventName) &&
         !github.context.payload.pull_request.merged) {
-        const baseResult = (0, child_process_1.spawnSync)('git', ['merge-base', `origin/${mainBranchName}`, 'HEAD'], { encoding: 'utf-8' });
+        const baseResult = (0, child_process_1.spawnSync)('git', [
+            'merge-base',
+            `origin/${github.context.payload[eventName].base.ref}`,
+            'HEAD',
+        ], { encoding: 'utf-8' });
         BASE_SHA = baseResult.stdout;
     }
     else if (eventName == 'merge_group') {

@@ -44,7 +44,11 @@ let BASE_SHA: string;
   ) {
     const baseResult = spawnSync(
       'git',
-      ['merge-base', `origin/${mainBranchName}`, 'HEAD'],
+      [
+        'merge-base',
+        `origin/${github.context.payload[eventName].base.ref}`,
+        'HEAD',
+      ],
       { encoding: 'utf-8' },
     );
     BASE_SHA = baseResult.stdout;
