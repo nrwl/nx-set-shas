@@ -8,6 +8,9 @@ inputs:
   main-branch-name:
     description: 'The name of the main branch in your repo, used as the target of PRs. E.g. main, master etc'
     default: 'main'
+  remote:
+    description: 'The name of the remote to fetch from'
+    default: 'origin'
   set-environment-variables-for-job:
     description: 'Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job'
     default: 'true'

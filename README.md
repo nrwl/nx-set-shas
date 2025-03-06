@@ -72,11 +72,21 @@ jobs:
 ```yaml
 - uses: nrwl/nx-set-shas@v4
   with:
+    # The GitHub token used to perform git operations
+    #
+    # Default: ${ github.token }
+    gh-token: ''
+
     # The "main" branch of your repository (the base branch which you target with PRs).
     # Common names for this branch include main and master.
     #
-    # Default: main
+    # Default: "main"
     main-branch-name: ''
+
+    # The name of the remote to fetch from
+    #
+    # Default: "origin"
+    remote: ''
 
     # Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job.
     #
@@ -89,18 +99,16 @@ jobs:
     error-on-no-successful-workflow: ''
 
     # Fallback SHA to use if no successful workflow run is found. This can be useful in scenarios where you need a specific commit as a reference for comparison, especially in newly set up repositories or those with sparse workflow runs.
-    #
-    # Default: ""
     fallback-sha: ''
 
     # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
     #
-    # Default: push
+    # Default: "push"
     last-successful-event: ''
 
     # The path where your repository is. This is only required for cases where the repository code is checked out or moved to a specific path.
     #
-    # Default: .
+    # Default: "."
     working-directory: ''
 
     # The ID of the github action workflow to check for successful run or the name of the file name containing the workflow.
