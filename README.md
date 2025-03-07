@@ -121,7 +121,7 @@ jobs:
 
 ## Permissions in v2+
 
-This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`:
+This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`. If you are using the action with `merge queues` you will need to enable also `pull-request` permission:
 
 <!-- start permissions-in-v2 -->
 
@@ -133,6 +133,7 @@ jobs:
     permissions:
       contents: 'read'
       actions: 'read'
+      pull-requests: 'read'
 ```
 
 <!-- end permissions-in-v2 -->
