@@ -29941,6 +29941,7 @@ const lastSuccessfulEvent = core.getInput('last-successful-event');
 const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
+const remote = core.getInput('remote');
 const defaultWorkingDirectory = '.';
 let BASE_SHA;
 (() => __awaiter(void 0, void 0, void 0, function* () {
@@ -29962,7 +29963,7 @@ let BASE_SHA;
         !github.context.payload.pull_request.merged) {
         const baseResult = (0, child_process_1.spawnSync)('git', [
             'merge-base',
-            `origin/${github.context.payload[eventName].base.ref}`,
+            `${remote}/${github.context.payload[eventName].base.ref}`,
             'HEAD',
         ], { encoding: 'utf-8' });
         BASE_SHA = baseResult.stdout;
@@ -29988,14 +29989,14 @@ let BASE_SHA;
             }
             else {
                 process.stdout.write('\n');
-                process.stdout.write(`WARNING: Unable to find a successful workflow run on 'origin/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`);
+                process.stdout.write(`WARNING: Unable to find a successful workflow run on '${remote}/${mainBranchName}', or the latest successful workflow was connected to a commit which no longer exists on that branch (e.g. if that branch was rebased)\n`);
                 if (fallbackSHA) {
                     BASE_SHA = fallbackSHA;
                     process.stdout.write(`Using provided fallback SHA: ${fallbackSHA}\n`);
                 }
                 else {
                     // Check if HEAD~1 exists, and if not, set BASE_SHA to the empty tree hash
-                    const LAST_COMMIT_CMD = `origin/${mainBranchName}~1`;
+                    const LAST_COMMIT_CMD = `${remote}/${mainBranchName}~1`;
                     const baseRes = (0, child_process_1.spawnSync)('git', ['rev-parse', LAST_COMMIT_CMD], {
                         encoding: 'utf-8',
                     });
@@ -30009,7 +30010,7 @@ let BASE_SHA;
                         process.stdout.write(`HEAD~1 does not exist. We are therefore defaulting to use the empty git tree hash as BASE.\n`);
                     }
                     else {
-                        process.stdout.write(`We are therefore defaulting to use HEAD~1 on 'origin/${mainBranchName}'\n`);
+                        process.stdout.write(`We are therefore defaulting to use HEAD~1 on '${remote}/${mainBranchName}'\n`);
                         BASE_SHA = baseRes.stdout;
                     }
                     process.stdout.write('\n');
@@ -30021,7 +30022,7 @@ let BASE_SHA;
         }
         else {
             process.stdout.write('\n');
-            process.stdout.write(`Found the last successful workflow run on 'origin/${mainBranchName}'\n`);
+            process.stdout.write(`Found the last successful workflow run on '${remote}/${mainBranchName}'\n`);
             process.stdout.write(`Commit: ${BASE_SHA}\n`);
         }
     }
@@ -30046,10 +30047,10 @@ let BASE_SHA;
 }))();
 function reportFailure(branchName) {
     core.setFailed(`
-    Unable to find a successful workflow run on 'origin/${branchName}'
+    Unable to find a successful workflow run on '${remote}/${branchName}'
     NOTE: You have set 'error-on-no-successful-workflow' on the action so this is a hard error.
 
-    Is it possible that you have no runs currently on 'origin/${branchName}'?
+    Is it possible that you have no runs currently on '${remote}/${branchName}'?
     - If yes, then you should run the workflow without this flag first.
     - If no, then you might have changed your git history and those commits no longer exist.`);
 }
