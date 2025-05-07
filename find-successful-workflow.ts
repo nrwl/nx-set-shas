@@ -177,6 +177,7 @@ async function findSuccessfulCommit(
   repo: string,
   branch: string,
   lastSuccessfulEvent: string,
+  filterDisplayTitle: string,
 ): Promise<string | undefined> {
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
@@ -211,9 +212,14 @@ async function findSuccessfulCommit(
         status: 'success',
       },
     )
-    .then(({ data: { workflow_runs } }) =>
-      workflow_runs.map((run: { head_sha: any }) => run.head_sha),
-    );
+    .then(({ data: { workflow_runs } }) => {
+      if (!!filterDisplayTitle) {
+        workflow_runs = workflow_runs.filter((workflow_run) =>
+          workflow_run.display_title.includes(filterDisplayTitle),
+        );
+      }
+      return workflow_runs.map((run) => run.head_sha);
+    });
 
   return await findExistingCommit(octokit, branch, shas);
 }
