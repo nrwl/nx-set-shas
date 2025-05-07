@@ -19,6 +19,7 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
+const filterDisplayTitle = core.getInput('filter-display-title');
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA: string;
@@ -67,6 +68,7 @@ let BASE_SHA: string;
         repo,
         mainBranchName,
         lastSuccessfulEvent,
+        filterDisplayTitle,
       );
     } catch (e) {
       core.setFailed(e.message);
@@ -177,7 +179,7 @@ async function findSuccessfulCommit(
   repo: string,
   branch: string,
   lastSuccessfulEvent: string,
-  filterDisplayTitle: string,
+  filterDisplayTitle: string | undefined,
 ): Promise<string | undefined> {
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
