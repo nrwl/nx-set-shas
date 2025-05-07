@@ -29,6 +29,8 @@ inputs:
     default: '.'
   workflow-id:
     description: 'The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow'
+  filter-display-title:
+    description: 'The filter display title of the workflow run to track. This is used to identify the correct workflow run when multiple runs exist.'
 
 outputs:
   base:
