@@ -29928,6 +29928,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
@@ -29942,6 +29949,7 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
+const filterDisplayTitle = core.getInput('filter-display-title');
 const defaultWorkingDirectory = '.';
 let BASE_SHA;
 (() => __awaiter(void 0, void 0, void 0, function* () {
@@ -29976,7 +29984,7 @@ let BASE_SHA;
     }
     else {
         try {
-            BASE_SHA = yield findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
+            BASE_SHA = yield findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent, filterDisplayTitle);
         }
         catch (e) {
             core.setFailed(e.message);
@@ -30057,7 +30065,7 @@ function reportFailure(branchName) {
 /**
  * Find last successful workflow run on the repo
  */
-function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent) {
+function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSuccessfulEvent, filterDisplayTitle) {
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
         if (!workflow_id) {
@@ -30086,7 +30094,12 @@ function findSuccessfulCommit(workflow_id, run_id, owner, repo, branch, lastSucc
             event: lastSuccessfulEvent,
             status: 'success',
         })
-            .then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
+            .then(({ data: { workflow_runs } }) => {
+            if (!!filterDisplayTitle) {
+                workflow_runs = workflow_runs.filter((workflow_run) => workflow_run.display_title.includes(filterDisplayTitle));
+            }
+            return workflow_runs.map((run) => run.head_sha);
+        });
         return yield findExistingCommit(octokit, branch, shas);
     });
 }
@@ -30108,6 +30121,7 @@ function findExistingCommit(octokit, branchName, shas) {
  */
 function commitExists(octokit, branchName, commitSha) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, e_1, _b, _c;
         try {
             (0, child_process_1.spawnSync)('git', ['cat-file', '-e', commitSha], {
                 stdio: ['pipe', 'pipe', null],
@@ -30119,15 +30133,34 @@ function commitExists(octokit, branchName, commitSha) {
                 commit_sha: commitSha,
             });
             // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-            const commits = yield octokit.request('GET /repos/{owner}/{repo}/commits', {
+            const iterator = octokit.paginate.iterator(octokit.rest.repos.listCommits, {
                 owner,
                 repo,
                 sha: branchName,
                 per_page: 100,
             });
-            return commits.data.some((commit) => commit.sha === commitSha);
+            try {
+                // iterate through each response
+                for (var _d = true, iterator_1 = __asyncValues(iterator), iterator_1_1; iterator_1_1 = yield iterator_1.next(), _a = iterator_1_1.done, !_a; _d = true) {
+                    _c = iterator_1_1.value;
+                    _d = false;
+                    const { data: commits } = _c;
+                    for (const commit of commits) {
+                        if (commit.sha === commitSha) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (!_d && !_a && (_b = iterator_1.return)) yield _b.call(iterator_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
         }
-        catch (_a) {
+        catch (_e) {
             return false;
         }
     });

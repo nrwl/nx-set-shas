@@ -263,16 +263,21 @@ async function commitExists(
     });
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
+    const iterator = octokit.paginate.iterator(octokit.rest.repos.listCommits, {
       owner,
       repo,
       sha: branchName,
       per_page: 100,
     });
 
-    return commits.data.some(
-      (commit: { sha: string }) => commit.sha === commitSha,
-    );
+    // iterate through each response
+    for await (const { data: commits } of iterator) {
+      for (const commit of commits) {
+        if (commit.sha === commitSha) {
+          return true;
+        }
+      }
+    }
   } catch {
     return false;
   }
