@@ -30,6 +30,8 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: oven-sh/setup-bun@v2
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
