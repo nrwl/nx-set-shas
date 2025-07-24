@@ -1,3 +1,17 @@
+# Contributing
+
+## Prerequisites
+
+For development purposes, this repo uses `bun` as a package manager, bundler and TypeScript script runner.
+
+You can install `bun` by following the instruction on https://bun.com/
+
+## Development
+
+- Run `bun install` to install the dependencies.
+- Run `bun run build` to build the action.
+- Run `bun run format` to format the code. This is also done automatically by the pre-commit hook (please do not skip it).
+
 # Notes to Admins
 
 In order to publish a new version of the action, simply update the "version" in the package.json and merge into the main branch.

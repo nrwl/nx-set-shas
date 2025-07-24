@@ -27,32 +27,33 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          filter: tree:0
 
       - uses: actions/checkout@v4
         name: Checkout [Push]
         if: ${{ github.event_name != 'pull_request' }}
         with:
           fetch-depth: 0
+          filter: tree:0
 
-      - name: Set Node.js 18.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install
-        run: yarn --frozen-lockfile
+        run: bun install
 
       - name: Compile
-        run: yarn build
+        run: bun run build
 
       - name: Test default PR Workflow
         if: github.event_name == 'pull_request'
         uses: ./
         with:
           main-branch-name: ${{ github.base_ref }}
+
       - name: Verify default PR Workflow
         if: github.event_name == 'pull_request'
         shell: bash
+        # Use node for this to be most representative of the user's runtime environment
         run: |
           BASE_SHA=$(echo $(git merge-base origin/${{github.base_ref}} HEAD))
           HEAD_SHA=$(git rev-parse HEAD)
@@ -64,9 +65,11 @@ jobs:
         uses: ./
         with:
           main-branch-name: ${{ github.ref_name }}
+
       - name: Verify default Push Workflow
         if: github.event_name != 'pull_request'
         shell: bash
+        # Use node for this to be most representative of the user's runtime environment
         run: |
           if git merge-base --is-ancestor $NX_BASE HEAD; then
             BASE_SHA=$NX_BASE;

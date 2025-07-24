@@ -12,13 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set Node.js 18.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install
-        run: yarn --frozen-lockfile
+        run: bun install
 
       - name: Check formatting with Prettier
-        run: npx prettier --check .
+        run: bun run format:check
