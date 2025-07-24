@@ -31,6 +31,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
+          filter: tree:0
 
       - uses: actions/checkout@v4
         name: Checkout [Default Branch]
@@ -38,6 +39,7 @@ jobs:
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
+          filter: tree:0
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: ./
@@ -46,6 +48,7 @@ jobs:
 
       - name: Verify default PR Workflow
         if: ${{ github.event_name == 'pull_request' }}
+        # Use node for this to be most representative of the user's runtime environment
         run: |
           BASE_SHA=$(echo $(git merge-base origin/${{github.base_ref}} HEAD))
           HEAD_SHA=$(git rev-parse HEAD)
@@ -54,6 +57,7 @@ jobs:
 
       - name: Verify default Push Workflow
         if: ${{ github.event_name != 'pull_request' }}
+        # Use node for this to be most representative of the user's runtime environment
         run: |
           if git merge-base --is-ancestor $NX_BASE HEAD; then
             BASE_SHA=$NX_BASE;

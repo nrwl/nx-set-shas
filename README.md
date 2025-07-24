@@ -1,5 +1,9 @@
-<p style="text-align: center;"><img src=".github/assets/nx.png" 
-width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
+<p style="text-align: center;">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-dark.svg">
+    <img alt="Nx - Smart Repos · Fast Builds" src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-light.svg" width="100%">
+  </picture>
+</p>
 
 <h1 align="center">Set SHAs Action</h1>
 
@@ -13,9 +17,7 @@ width="100%" alt="Nx - Smart, Extensible Build Framework"></p>
   - [Problem](#problem)
 - [License](#license)
 
-**NOTE:** This documentation is for version `2.x.x+` which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
-
-**NOTE:** The `v4` does no longer support deprecated Node versions. Supported version is `Node v18+`.
+**NOTE:** This documentation is for version `2.x.x` and later which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
 
 ## Example Usage
 

@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { spawnSync } from 'child_process';
-import { existsSync } from 'fs';
 import { GitHub } from '@actions/github/lib/utils';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 const {
   runId,
@@ -97,9 +97,7 @@ let BASE_SHA: string;
             const emptyTreeRes = spawnSync(
               'git',
               ['hash-object', '-t', 'tree', '/dev/null'],
-              {
-                encoding: 'utf-8',
-              },
+              { encoding: 'utf-8' },
             );
             // 4b825dc642cb6eb9a060e54bf8d69288fbee4904 is the expected result of hashing the empty tree
             BASE_SHA =

@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+bunx --no-install lint-staged --allow-empty
 
-npx --no-install lint-staged --allow-empty
-
-node tools/pre-commit.js
+bun tools/pre-commit.ts
