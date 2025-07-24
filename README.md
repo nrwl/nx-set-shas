@@ -35,6 +35,7 @@ jobs:
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
+          filter: tree:0 # Optional, but recommended: reduce the size of the checkout with tree filtering, see https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/
 
       # In any subsequent steps within this job (myjob) we can reference the resolved SHAs
       # using either the step outputs or environment variables:
@@ -157,6 +158,7 @@ jobs:
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
+          filter: tree:0 # Optional, but recommended: reduce the size of the checkout with tree filtering, see https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/
 
       # Mark your git directory as safe
       - name: Set Directory as Safe
