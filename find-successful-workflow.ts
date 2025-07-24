@@ -19,6 +19,7 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
+const filterDisplayTitle = core.getInput('filter-display-title');
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA: string;
@@ -67,6 +68,7 @@ let BASE_SHA: string;
         repo,
         mainBranchName,
         lastSuccessfulEvent,
+        filterDisplayTitle,
       );
     } catch (e) {
       core.setFailed(e.message);
@@ -177,6 +179,7 @@ async function findSuccessfulCommit(
   repo: string,
   branch: string,
   lastSuccessfulEvent: string,
+  filterDisplayTitle: string | undefined,
 ): Promise<string | undefined> {
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
@@ -211,9 +214,14 @@ async function findSuccessfulCommit(
         status: 'success',
       },
     )
-    .then(({ data: { workflow_runs } }) =>
-      workflow_runs.map((run: { head_sha: any }) => run.head_sha),
-    );
+    .then(({ data: { workflow_runs } }) => {
+      if (!!filterDisplayTitle) {
+        workflow_runs = workflow_runs.filter((workflow_run) =>
+          workflow_run.display_title.includes(filterDisplayTitle),
+        );
+      }
+      return workflow_runs.map((run) => run.head_sha);
+    });
 
   return await findExistingCommit(octokit, branch, shas);
 }
@@ -255,16 +263,21 @@ async function commitExists(
     });
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
+    const iterator = octokit.paginate.iterator(octokit.rest.repos.listCommits, {
       owner,
       repo,
       sha: branchName,
       per_page: 100,
     });
 
-    return commits.data.some(
-      (commit: { sha: string }) => commit.sha === commitSha,
-    );
+    // iterate through each response
+    for await (const { data: commits } of iterator) {
+      for (const commit of commits) {
+        if (commit.sha === commitSha) {
+          return true;
+        }
+      }
+    }
   } catch {
     return false;
   }
