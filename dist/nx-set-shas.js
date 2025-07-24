@@ -22731,9 +22731,10 @@ var BASE_SHA;
   });
   let HEAD_SHA = headResult.stdout;
   if (["pull_request", "pull_request_target"].includes(eventName) && !github.context.payload.pull_request.merged) {
+    const pullRequestEventName = "pull_request";
     const baseResult = spawnSync("git", [
       "merge-base",
-      `${remote}/${github.context.payload[eventName].base.ref}`,
+      `${remote}/${github.context.payload[pullRequestEventName].base.ref}`,
       "HEAD"
     ], { encoding: "utf-8" });
     BASE_SHA = baseResult.stdout;

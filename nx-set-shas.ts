@@ -43,11 +43,14 @@ let BASE_SHA: string;
     ['pull_request', 'pull_request_target'].includes(eventName) &&
     !github.context.payload.pull_request.merged
   ) {
+    // Both pull_request and pull_request_target events have the same payload structure
+    // https://github.com/nrwl/nx-set-shas/issues/186
+    const pullRequestEventName = 'pull_request';
     const baseResult = spawnSync(
       'git',
       [
         'merge-base',
-        `${remote}/${github.context.payload[eventName].base.ref}`,
+        `${remote}/${github.context.payload[pullRequestEventName].base.ref}`,
         'HEAD',
       ],
       { encoding: 'utf-8' },
