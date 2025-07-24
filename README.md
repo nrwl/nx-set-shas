@@ -118,6 +118,11 @@ jobs:
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
     workflow-id: ''
+
+    # If an otherwise matching commit contains any of the messages in this comma separated list, do not consider the commit. Useful for conventions like [skip ci]
+    #
+    # Default: ""
+    skip-if-message-contains: ''
 ```
 
 <!-- end configuration-options -->

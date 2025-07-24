@@ -29,6 +29,10 @@ inputs:
     default: '.'
   workflow-id:
     description: 'The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow'
+  skip-if-message-contains:
+    description: 'If an otherwise matching commit contains any of the messages in this comma separated list, do not consider the commit. Useful for conventions like [skip ci]'
+    required: false
+    default: ''
 
 outputs:
   base:

@@ -19,6 +19,17 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
+const skipIfMessageContains: string[] = !core.getInput(
+  'skip-if-message-contains',
+)
+  ? []
+  : core
+      .getInput('skip-if-message-contains')
+      .split(',')
+      .map((message) => message.trim());
+
+const VERBOSE_LOGGING = process.env.NX_SET_SHAS_VERBOSE_LOGGING === 'true';
+
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA: string;
@@ -244,29 +255,86 @@ async function commitExists(
   commitSha: string,
 ): Promise<boolean> {
   try {
-    spawnSync('git', ['cat-file', '-e', commitSha], {
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Checking if commit ${commitSha} exists in the checked out repo...`,
+      );
+    }
+    const catFileResult = spawnSync('git', ['cat-file', '-p', commitSha], {
       stdio: ['pipe', 'pipe', null],
+      encoding: 'utf-8',
     });
+    if (catFileResult.status !== 0) {
+      return false;
+    }
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Commit ${commitSha} exists in the checked out repo`,
+      );
+    }
+    if (skipIfMessageContains.length > 0) {
+      if (VERBOSE_LOGGING) {
+        console.log(
+          `[Debug]: Checking if commit ${commitSha} contains the any of the following messages: ${skipIfMessageContains.join(', ')}`,
+        );
+      }
+      if (
+        skipIfMessageContains.some((message) =>
+          catFileResult.stdout.includes(message),
+        )
+      ) {
+        if (VERBOSE_LOGGING) {
+          console.log(
+            `[Debug]: Commit ${commitSha} contains the message: ${skipIfMessageContains}. Skipping commit.`,
+          );
+        }
+        return true;
+      }
+    }
 
     // Check the commit exists in general
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Checking if commit ${commitSha} exists anywhere in the remote repo...`,
+      );
+    }
     await octokit.request('GET /repos/{owner}/{repo}/commits/{commit_sha}', {
       owner,
       repo,
       commit_sha: commitSha,
     });
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]:Commit ${commitSha} exists in the remote repo`);
+    }
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Checking if commit ${commitSha} exists on the expected branch (${branchName})...`,
+      );
+    }
     const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
       owner,
       repo,
       sha: branchName,
       per_page: 100,
     });
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Commit ${commitSha} exists on the expected branch (${branchName})`,
+      );
+    }
 
     return commits.data.some(
       (commit: { sha: string }) => commit.sha === commitSha,
     );
-  } catch {
+  } catch (err) {
+    if (VERBOSE_LOGGING) {
+      console.log(
+        `[Debug]: Commit ${commitSha} not found based on the previous check. Raw error:`,
+      );
+      console.log(err);
+    }
     return false;
   }
 }

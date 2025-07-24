@@ -22713,6 +22713,8 @@ var workingDirectory = core.getInput("working-directory");
 var workflowId = core.getInput("workflow-id");
 var fallbackSHA = core.getInput("fallback-sha");
 var remote = core.getInput("remote");
+var skipIfMessageContains = !core.getInput("skip-if-message-contains") ? [] : core.getInput("skip-if-message-contains").split(",").map((message) => message.trim());
+var VERBOSE_LOGGING = process.env.NX_SET_SHAS_VERBOSE_LOGGING === "true";
 var defaultWorkingDirectory = ".";
 var BASE_SHA;
 (async () => {
@@ -22859,22 +22861,59 @@ async function findExistingCommit(octokit, branchName, shas) {
 }
 async function commitExists(octokit, branchName, commitSha) {
   try {
-    spawnSync("git", ["cat-file", "-e", commitSha], {
-      stdio: ["pipe", "pipe", null]
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Checking if commit ${commitSha} exists in the checked out repo...`);
+    }
+    const catFileResult = spawnSync("git", ["cat-file", "-p", commitSha], {
+      stdio: ["pipe", "pipe", null],
+      encoding: "utf-8"
     });
+    if (catFileResult.status !== 0) {
+      return false;
+    }
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Commit ${commitSha} exists in the checked out repo`);
+    }
+    if (skipIfMessageContains.length > 0) {
+      if (VERBOSE_LOGGING) {
+        console.log(`[Debug]: Checking if commit ${commitSha} contains the any of the following messages: ${skipIfMessageContains.join(", ")}`);
+      }
+      if (skipIfMessageContains.some((message) => catFileResult.stdout.includes(message))) {
+        if (VERBOSE_LOGGING) {
+          console.log(`[Debug]: Commit ${commitSha} contains the message: ${skipIfMessageContains}. Skipping commit.`);
+        }
+        return true;
+      }
+    }
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Checking if commit ${commitSha} exists anywhere in the remote repo...`);
+    }
     await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
       owner,
       repo,
       commit_sha: commitSha
     });
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]:Commit ${commitSha} exists in the remote repo`);
+    }
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Checking if commit ${commitSha} exists on the expected branch (${branchName})...`);
+    }
     const commits = await octokit.request("GET /repos/{owner}/{repo}/commits", {
       owner,
       repo,
       sha: branchName,
       per_page: 100
     });
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Commit ${commitSha} exists on the expected branch (${branchName})`);
+    }
     return commits.data.some((commit) => commit.sha === commitSha);
-  } catch {
+  } catch (err) {
+    if (VERBOSE_LOGGING) {
+      console.log(`[Debug]: Commit ${commitSha} not found based on the previous check. Raw error:`);
+      console.log(err);
+    }
     return false;
   }
 }
