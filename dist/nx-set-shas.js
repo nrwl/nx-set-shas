@@ -22713,6 +22713,7 @@ var workingDirectory = core.getInput("working-directory");
 var workflowId = core.getInput("workflow-id");
 var fallbackSHA = core.getInput("fallback-sha");
 var remote = core.getInput("remote");
+var usePreviousMergeGroupCommit = core.getBooleanInput("use-previous-merge-group-commit");
 var defaultWorkingDirectory = ".";
 var BASE_SHA;
 (async () => {
@@ -22738,7 +22739,7 @@ var BASE_SHA;
       "HEAD"
     ], { encoding: "utf-8" });
     BASE_SHA = baseResult.stdout;
-  } else if (eventName == "merge_group") {
+  } else if (eventName == "merge_group" && usePreviousMergeGroupCommit) {
     const baseResult = spawnSync("git", ["rev-parse", "HEAD^1"], {
       encoding: "utf-8"
     });

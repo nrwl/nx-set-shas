@@ -19,6 +19,9 @@ const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
+const usePreviousMergeGroupCommit = core.getBooleanInput(
+  'use-previous-merge-group-commit',
+);
 const defaultWorkingDirectory = '.';
 
 let BASE_SHA: string;
@@ -56,7 +59,7 @@ let BASE_SHA: string;
       { encoding: 'utf-8' },
     );
     BASE_SHA = baseResult.stdout;
-  } else if (eventName == 'merge_group') {
+  } else if (eventName == 'merge_group' && usePreviousMergeGroupCommit) {
     const baseResult = spawnSync('git', ['rev-parse', 'HEAD^1'], {
       encoding: 'utf-8',
     });

@@ -29,6 +29,9 @@ inputs:
     default: '.'
   workflow-id:
     description: 'The ID of the workflow to track or name of the file name. E.g. ci.yml. Defaults to current workflow'
+  use-previous-merge-group-commit:
+    description: 'When using merge-group, use the previous commit in the group as the base SHA'
+    default: 'true'
 
 outputs:
   base:
