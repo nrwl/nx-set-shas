@@ -256,16 +256,29 @@ async function commitExists(
     });
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
-      owner,
-      repo,
-      sha: branchName,
-      per_page: 100,
-    });
+    let maxPages = 20; // This could be made a input param to allow larger/longer searches
+    let commitFound = false;
+    yield octokit.paginate("GET /repos/{owner}/{repo}/commits", {
+                owner,
+                repo,
+                sha: branchName,
+                per_page: 100,
+            }, (response, done) => {
+        if (response.data.some((commit: { sha: string }) => commit.sha === commitSha)) {
+          commitFound = true;
+          done(); // Stop pagination if commit is found
+        }
 
-    return commits.data.some(
-      (commit: { sha: string }) => commit.sha === commitSha,
+        // Decrement maxPages and stop if limit reached
+        if (maxPages <= 1) { // Use <= 1 because it's decremented after checking
+          done();
+        }
+        maxPages--;
+        return response;
+      }
     );
+
+    return commitFound;
   } catch {
     return false;
   }
