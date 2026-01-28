@@ -3435,7 +3435,7 @@ var require_constants2 = __commonJS((exports, module) => {
     }
   })();
   var channel;
-  var structuredClone = globalThis.structuredClone ?? function structuredClone(value, options = undefined) {
+  var structuredClone = globalThis.structuredClone ?? function structuredClone2(value, options = undefined) {
     if (arguments.length === 0) {
       throw new TypeError("missing argument");
     }
@@ -22715,6 +22715,7 @@ var fallbackSHA = core.getInput("fallback-sha");
 var remote = core.getInput("remote");
 var usePreviousMergeGroupCommit = core.getBooleanInput("use-previous-merge-group-commit");
 var defaultWorkingDirectory = ".";
+var maxCommitPages = core.getInput("max-commits-pages-to-check");
 var BASE_SHA;
 (async () => {
   if (workingDirectory !== defaultWorkingDirectory) {
@@ -22868,13 +22869,22 @@ async function commitExists(octokit, branchName, commitSha) {
       repo,
       commit_sha: commitSha
     });
-    const commits = await octokit.request("GET /repos/{owner}/{repo}/commits", {
+    let maxPages = maxCommitPages;
+    for await (const response of octokit.paginate.iterator("GET /repos/{owner}/{repo}/commits", {
       owner,
       repo,
       sha: branchName,
       per_page: 100
-    });
-    return commits.data.some((commit) => commit.sha === commitSha);
+    })) {
+      if (response.data.some((commit) => commit.sha === commitSha)) {
+        return true;
+      }
+      maxPages--;
+      if (maxPages <= 1) {
+        break;
+      }
+    }
+    return false;
   } catch {
     return false;
   }

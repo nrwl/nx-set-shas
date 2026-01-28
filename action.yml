@@ -32,6 +32,9 @@ inputs:
   use-previous-merge-group-commit:
     description: 'When using merge-group, use the previous commit in the group as the base SHA'
     default: 'true'
+  commit-pagination-limit:
+    description: 'When searching for the last successful workflow run on the main branch, this is the maximum number of pages of commits to check (each page is 100 commits). Increase this value if you have a lot of commits between workflow runs on your main branch. Note: each page requires an API call, so increasing this value may lead to hitting GitHub API rate limits.'
+    default: '20'
 
 outputs:
   base:
