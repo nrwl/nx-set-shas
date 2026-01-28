@@ -118,6 +118,11 @@ jobs:
     # E.g. 'ci.yml'. If not provided, current workflow id will be used
     #
     workflow-id: ''
+
+    # When using merge-group, use the previous commit in the group as the base SHA.
+    #
+    # Default: true
+    use-previous-merge-group-commit: ''
 ```
 
 <!-- end configuration-options -->
