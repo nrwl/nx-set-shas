@@ -23,6 +23,7 @@ const usePreviousMergeGroupCommit = core.getBooleanInput(
   'use-previous-merge-group-commit',
 );
 const defaultWorkingDirectory = '.';
+const maxCommitPages = core.getInput('commit-pagination-limit');
 
 let BASE_SHA: string;
 (async () => {
@@ -259,16 +260,30 @@ async function commitExists(
     });
 
     // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
-      owner,
-      repo,
-      sha: branchName,
-      per_page: 100,
-    });
+    let maxPages = maxCommitPages;
+    for await (const response of octokit.paginate.iterator(
+      'GET /repos/{owner}/{repo}/commits',
+      {
+        owner,
+        repo,
+        sha: branchName,
+        per_page: 100,
+      },
+    )) {
+      if (
+        response.data.some(
+          (commit: { sha: string }) => commit.sha === commitSha,
+        )
+      ) {
+        return true;
+      }
+      maxPages--;
+      if (maxPages <= 1) {
+        break;
+      }
+    }
 
-    return commits.data.some(
-      (commit: { sha: string }) => commit.sha === commitSha,
-    );
+    return false;
   } catch {
     return false;
   }
