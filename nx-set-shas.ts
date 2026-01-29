@@ -23,7 +23,7 @@ const usePreviousMergeGroupCommit = core.getBooleanInput(
   'use-previous-merge-group-commit',
 );
 const defaultWorkingDirectory = '.';
-const maxCommitPages = core.getInput('max-commits-pages-to-check');
+const maxCommitPages = core.getInput('commit-pagination-limit');
 
 let BASE_SHA: string;
 (async () => {

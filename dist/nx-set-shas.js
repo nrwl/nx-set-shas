@@ -22715,7 +22715,7 @@ var fallbackSHA = core.getInput("fallback-sha");
 var remote = core.getInput("remote");
 var usePreviousMergeGroupCommit = core.getBooleanInput("use-previous-merge-group-commit");
 var defaultWorkingDirectory = ".";
-var maxCommitPages = core.getInput("max-commits-pages-to-check");
+var maxCommitPages = core.getInput("commit-pagination-limit");
 var BASE_SHA;
 (async () => {
   if (workingDirectory !== defaultWorkingDirectory) {
