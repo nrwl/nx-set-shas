@@ -22,8 +22,8 @@
   "packageManager": "bun@1.2.19",
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1"
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
