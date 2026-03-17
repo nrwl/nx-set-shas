@@ -14,10 +14,10 @@
     "url": "https://github.com/nrwl/nx-set-shas/issues"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "volta": {
-    "node": "20.19.4"
+    "node": "24.14.0"
   },
   "packageManager": "bun@1.2.19",
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",

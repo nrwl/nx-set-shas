@@ -42,7 +42,7 @@ outputs:
     description: "Used to check if a previous run was found in order to perform additional logic later on in your workflow, the only possible values is the string 'true', otherwise it won't be set"
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/nx-set-shas.js'
 
 branding:
