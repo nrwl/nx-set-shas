@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     name: My Job
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
@@ -161,7 +161,7 @@ jobs:
     container: my-org/my-amazing-image:v1.2.3-fresh
     name: My Job
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
