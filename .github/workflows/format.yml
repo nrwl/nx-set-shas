@@ -17,5 +17,5 @@ jobs:
       - name: Install
         run: bun install
 
-      - name: Check formatting with Prettier
+      - name: Check formatting
         run: bun run format:check

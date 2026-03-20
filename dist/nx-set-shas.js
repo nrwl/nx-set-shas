@@ -4,29 +4,15 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-function __accessProp(key) {
-  return this[key];
-}
-var __toESMCache_node;
-var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
-  var canCache = mod != null && typeof mod === "object";
-  if (canCache) {
-    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
-    var cached = cache.get(mod);
-    if (cached)
-      return cached;
-  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: __accessProp.bind(mod, key),
+        get: () => mod[key],
         enumerable: true
       });
-  if (canCache)
-    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
@@ -18847,253 +18833,6 @@ function parse(options) {
         body = remainingParameters;
       }
     }
-<<<<<<< HEAD
-  }
-  if (!headers["content-type"] && typeof body !== "undefined") {
-    headers["content-type"] = "application/json; charset=utf-8";
-  }
-  if (["PATCH", "PUT"].includes(method) && typeof body === "undefined") {
-    body = "";
-  }
-  return Object.assign({ method, url, headers }, typeof body !== "undefined" ? { body } : null, options.request ? { request: options.request } : null);
-}
-function endpointWithDefaults(defaults, route, options) {
-  return parse(merge(defaults, route, options));
-}
-function withDefaults(oldDefaults, newDefaults) {
-  const DEFAULTS2 = merge(oldDefaults, newDefaults);
-  const endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
-  return Object.assign(endpoint2, {
-    DEFAULTS: DEFAULTS2,
-    defaults: withDefaults.bind(null, DEFAULTS2),
-    merge: merge.bind(null, DEFAULTS2),
-    parse
-  });
-}
-var endpoint = withDefaults(null, DEFAULTS);
-
-// node_modules/fast-content-type-parse/index.js
-var NullObject = function NullObject2() {};
-NullObject.prototype = Object.create(null);
-var paramRE = /; *([!#$%&'*+.^\w`|~-]+)=("(?:[\v\u0020\u0021\u0023-\u005b\u005d-\u007e\u0080-\u00ff]|\\[\v\u0020-\u00ff])*"|[!#$%&'*+.^\w`|~-]+) */gu;
-var quotedPairRE = /\\([\v\u0020-\u00ff])/gu;
-var mediaTypeRE = /^[!#$%&'*+.^\w|~-]+\/[!#$%&'*+.^\w|~-]+$/u;
-var defaultContentType = { type: "", parameters: new NullObject };
-Object.freeze(defaultContentType.parameters);
-Object.freeze(defaultContentType);
-function safeParse(header) {
-  if (typeof header !== "string") {
-    return defaultContentType;
-  }
-  let index = header.indexOf(";");
-  const type = index !== -1 ? header.slice(0, index).trim() : header.trim();
-  if (mediaTypeRE.test(type) === false) {
-    return defaultContentType;
-  }
-  const result = {
-    type: type.toLowerCase(),
-    parameters: new NullObject
-  };
-  if (index === -1) {
-    return result;
-  }
-  let key;
-  let match;
-  let value;
-  paramRE.lastIndex = index;
-  while (match = paramRE.exec(header)) {
-    if (match.index !== index) {
-      return defaultContentType;
-    }
-    index += match[0].length;
-    key = match[1].toLowerCase();
-    value = match[2];
-    if (value[0] === '"') {
-      value = value.slice(1, value.length - 1);
-      quotedPairRE.test(value) && (value = value.replace(quotedPairRE, "$1"));
-    }
-    result.parameters[key] = value;
-  }
-  if (index !== header.length) {
-    return defaultContentType;
-  }
-  return result;
-}
-var $safeParse = safeParse;
-
-// node_modules/json-with-bigint/json-with-bigint.js
-var intRegex = /^-?\d+$/;
-var noiseValue = /^-?\d+n+$/;
-var originalStringify = JSON.stringify;
-var originalParse = JSON.parse;
-var customFormat = /^-?\d+n$/;
-var bigIntsStringify = /([\[:])?"(-?\d+)n"($|([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
-var noiseStringify = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
-var JSONStringify = (value, replacer, space) => {
-  if ("rawJSON" in JSON) {
-    return originalStringify(value, (key, value2) => {
-      if (typeof value2 === "bigint")
-        return JSON.rawJSON(value2.toString());
-      if (typeof replacer === "function")
-        return replacer(key, value2);
-      if (Array.isArray(replacer) && replacer.includes(key))
-        return value2;
-      return value2;
-    }, space);
-  }
-  if (!value)
-    return originalStringify(value, replacer, space);
-  const convertedToCustomJSON = originalStringify(value, (key, value2) => {
-    const isNoise = typeof value2 === "string" && Boolean(value2.match(noiseValue));
-    if (isNoise)
-      return value2.toString() + "n";
-    if (typeof value2 === "bigint")
-      return value2.toString() + "n";
-    if (typeof replacer === "function")
-      return replacer(key, value2);
-    if (Array.isArray(replacer) && replacer.includes(key))
-      return value2;
-    return value2;
-  }, space);
-  const processedJSON = convertedToCustomJSON.replace(bigIntsStringify, "$1$2$3");
-  const denoisedJSON = processedJSON.replace(noiseStringify, "$1$2$3");
-  return denoisedJSON;
-};
-var isContextSourceSupported = () => JSON.parse("1", (_, __, context) => !!context && context.source === "1");
-var convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
-  const isCustomFormatBigInt = typeof value === "string" && value.match(customFormat);
-  if (isCustomFormatBigInt)
-    return BigInt(value.slice(0, -1));
-  const isNoiseValue = typeof value === "string" && value.match(noiseValue);
-  if (isNoiseValue)
-    return value.slice(0, -1);
-  if (typeof userReviver !== "function")
-    return value;
-  return userReviver(key, value, context);
-};
-var JSONParseV2 = (text, reviver) => {
-  return JSON.parse(text, (key, value, context) => {
-    const isBigNumber = typeof value === "number" && (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER);
-    const isInt = context && intRegex.test(context.source);
-    const isBigInt = isBigNumber && isInt;
-    if (isBigInt)
-      return BigInt(context.source);
-    if (typeof reviver !== "function")
-      return value;
-    return reviver(key, value, context);
-  });
-};
-var MAX_INT = Number.MAX_SAFE_INTEGER.toString();
-var MAX_DIGITS = MAX_INT.length;
-var stringsOrLargeNumbers = /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
-var noiseValueWithQuotes = /^"-?\d+n+"$/;
-var JSONParse = (text, reviver) => {
-  if (!text)
-    return originalParse(text, reviver);
-  if (isContextSourceSupported())
-    return JSONParseV2(text, reviver);
-  const serializedData = text.replace(stringsOrLargeNumbers, (text2, digits, fractional, exponential) => {
-    const isString = text2[0] === '"';
-    const isNoise = isString && Boolean(text2.match(noiseValueWithQuotes));
-    if (isNoise)
-      return text2.substring(0, text2.length - 1) + 'n"';
-    const isFractionalOrExponential = fractional || exponential;
-    const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
-    if (isString || isFractionalOrExponential || isLessThanMaxSafeInt)
-      return text2;
-    return '"' + text2 + 'n"';
-  });
-  return originalParse(serializedData, (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
-};
-
-// node_modules/@octokit/request-error/dist-src/index.js
-class RequestError extends Error {
-  name;
-  status;
-  request;
-  response;
-  constructor(message, statusCode, options) {
-    super(message, { cause: options.cause });
-    this.name = "HttpError";
-    this.status = Number.parseInt(statusCode);
-    if (Number.isNaN(this.status)) {
-      this.status = 0;
-    }
-    if ("response" in options) {
-      this.response = options.response;
-    }
-    const requestCopy = Object.assign({}, options.request);
-    if (options.request.headers.authorization) {
-      requestCopy.headers = Object.assign({}, options.request.headers, {
-        authorization: options.request.headers.authorization.replace(/(?<! ) .*$/, " [REDACTED]")
-      });
-    }
-    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
-    this.request = requestCopy;
-  }
-}
-
-// node_modules/@octokit/request/dist-bundle/index.js
-var VERSION2 = "10.0.8";
-var defaults_default = {
-  headers: {
-    "user-agent": `octokit-request.js/${VERSION2} ${getUserAgent()}`
-  }
-};
-function isPlainObject2(value) {
-  if (typeof value !== "object" || value === null)
-    return false;
-  if (Object.prototype.toString.call(value) !== "[object Object]")
-    return false;
-  const proto = Object.getPrototypeOf(value);
-  if (proto === null)
-    return true;
-  const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
-  return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
-}
-var noop = () => "";
-async function fetchWrapper(requestOptions) {
-  const fetch2 = requestOptions.request?.fetch || globalThis.fetch;
-  if (!fetch2) {
-    throw new Error("fetch is not set. Please pass a fetch implementation as new Octokit({ request: { fetch }}). Learn more at https://github.com/octokit/octokit.js/#fetch-missing");
-  }
-  const log = requestOptions.request?.log || console;
-  const parseSuccessResponseBody = requestOptions.request?.parseSuccessResponseBody !== false;
-  const body = isPlainObject2(requestOptions.body) || Array.isArray(requestOptions.body) ? JSONStringify(requestOptions.body) : requestOptions.body;
-  const requestHeaders = Object.fromEntries(Object.entries(requestOptions.headers).map(([name, value]) => [
-    name,
-    String(value)
-  ]));
-  let fetchResponse;
-  try {
-    fetchResponse = await fetch2(requestOptions.url, {
-      method: requestOptions.method,
-      body,
-      redirect: requestOptions.request?.redirect,
-      headers: requestHeaders,
-      signal: requestOptions.request?.signal,
-      ...requestOptions.body && { duplex: "half" }
-    });
-  } catch (error2) {
-    let message = "Unknown Error";
-    if (error2 instanceof Error) {
-      if (error2.name === "AbortError") {
-        error2.status = 500;
-        throw error2;
-      }
-      message = error2.message;
-      if (error2.name === "TypeError" && "cause" in error2) {
-        if (error2.cause instanceof Error) {
-          message = error2.cause.message;
-        } else if (typeof error2.cause === "string") {
-          message = error2.cause;
-||||||| parent of aa04f85 (feat!: migrate to Node 24)
-    return request2(requestOptions).then((response) => {
-      if (response.data.errors) {
-        const headers = {};
-        for (const key of Object.keys(response.headers)) {
-          headers[key] = response.headers[key];
-=======
   }
   if (!headers["content-type"] && typeof body !== "undefined") {
     headers["content-type"] = "application/json; charset=utf-8";
@@ -19347,7 +19086,6 @@ async function fetchWrapper(requestOptions) {
           message = error2.cause.message;
         } else if (typeof error2.cause === "string") {
           message = error2.cause;
->>>>>>> aa04f85 (feat!: migrate to Node 24)
         }
       }
     }
@@ -22300,11 +22038,7 @@ var BASE_SHA;
   let HEAD_SHA = headResult.stdout;
   if (["pull_request", "pull_request_target"].includes(eventName) && !context2.payload.pull_request.merged) {
     const pullRequestEventName = "pull_request";
-    const baseResult = spawnSync("git", [
-      "merge-base",
-      `${remote}/${context2.payload[pullRequestEventName].base.ref}`,
-      "HEAD"
-    ], { encoding: "utf-8" });
+    const baseResult = spawnSync("git", ["merge-base", `${remote}/${context2.payload[pullRequestEventName].base.ref}`, "HEAD"], { encoding: "utf-8" });
     BASE_SHA = baseResult.stdout;
   } else if (eventName == "merge_group" && usePreviousMergeGroupCommit) {
     const baseResult = spawnSync("git", ["rev-parse", "HEAD^1"], {
@@ -22337,7 +22071,9 @@ var BASE_SHA;
             encoding: "utf-8"
           });
           if (baseRes.status !== 0 || !baseRes.stdout) {
-            const emptyTreeRes = spawnSync("git", ["hash-object", "-t", "tree", "/dev/null"], { encoding: "utf-8" });
+            const emptyTreeRes = spawnSync("git", ["hash-object", "-t", "tree", "/dev/null"], {
+              encoding: "utf-8"
+            });
             BASE_SHA = emptyTreeRes.stdout ?? `4b825dc642cb6eb9a060e54bf8d69288fbee4904`;
             process.stdout.write(`HEAD~1 does not exist. We are therefore defaulting to use the empty git tree hash as BASE.
 `);

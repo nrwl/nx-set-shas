@@ -1,9 +1,0 @@
-node_modules
-dist
-/yarn.lock
-/.vscode
-/.idea
-/.github
-/.husky
-/.yarn
-/.env
