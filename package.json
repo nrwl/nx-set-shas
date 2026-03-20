@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "4.4.0",
+  "version": "5.0.0",
   "license": "MIT",
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
   "type": "module",
@@ -14,19 +14,19 @@
     "url": "https://github.com/nrwl/nx-set-shas/issues"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "volta": {
-    "node": "20.19.4"
+    "node": "24.14.0"
   },
   "packageManager": "bun@1.2.19",
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1"
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.19.9",
+    "@types/node": "^24.12.0",
     "husky": "^9.1.7",
     "is-ci": "^4.1.0",
     "lint-staged": "^16.1.2",

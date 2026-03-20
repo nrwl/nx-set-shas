@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["ES2023"],
+    "lib": ["ES2024"],
     "module": "nodenext",
-    "target": "ES2023"
+    "target": "ES2024",
+    "skipLibCheck": true
   }
 }

@@ -23,7 +23,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout [Pull Request]
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
           filter: tree:0
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout [Default Branch]
         if: ${{ github.event_name != 'pull_request' }}
         with:
