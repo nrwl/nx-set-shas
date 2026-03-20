@@ -4,29 +4,15 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-function __accessProp(key) {
-  return this[key];
-}
-var __toESMCache_node;
-var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
-  var canCache = mod != null && typeof mod === "object";
-  if (canCache) {
-    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
-    var cached = cache.get(mod);
-    if (cached)
-      return cached;
-  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: __accessProp.bind(mod, key),
+        get: () => mod[key],
         enumerable: true
       });
-  if (canCache)
-    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
@@ -18943,7 +18929,7 @@ var JSONStringify = (value, replacer, space) => {
   if (!value)
     return originalStringify(value, replacer, space);
   const convertedToCustomJSON = originalStringify(value, (key, value2) => {
-    const isNoise = typeof value2 === "string" && Boolean(value2.match(noiseValue));
+    const isNoise = typeof value2 === "string" && noiseValue.test(value2);
     if (isNoise)
       return value2.toString() + "n";
     if (typeof value2 === "bigint")
@@ -18958,12 +18944,26 @@ var JSONStringify = (value, replacer, space) => {
   const denoisedJSON = processedJSON.replace(noiseStringify, "$1$2$3");
   return denoisedJSON;
 };
-var isContextSourceSupported = () => JSON.parse("1", (_, __, context) => !!context && context.source === "1");
+var featureCache = new Map;
+var isContextSourceSupported = () => {
+  const parseFingerprint = JSON.parse.toString();
+  if (featureCache.has(parseFingerprint)) {
+    return featureCache.get(parseFingerprint);
+  }
+  try {
+    const result = JSON.parse("1", (_, __, context) => !!context?.source && context.source === "1");
+    featureCache.set(parseFingerprint, result);
+    return result;
+  } catch {
+    featureCache.set(parseFingerprint, false);
+    return false;
+  }
+};
 var convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
-  const isCustomFormatBigInt = typeof value === "string" && value.match(customFormat);
+  const isCustomFormatBigInt = typeof value === "string" && customFormat.test(value);
   if (isCustomFormatBigInt)
     return BigInt(value.slice(0, -1));
-  const isNoiseValue = typeof value === "string" && value.match(noiseValue);
+  const isNoiseValue = typeof value === "string" && noiseValue.test(value);
   if (isNoiseValue)
     return value.slice(0, -1);
   if (typeof userReviver !== "function")
@@ -18993,7 +18993,7 @@ var JSONParse = (text, reviver) => {
     return JSONParseV2(text, reviver);
   const serializedData = text.replace(stringsOrLargeNumbers, (text2, digits, fractional, exponential) => {
     const isString = text2[0] === '"';
-    const isNoise = isString && Boolean(text2.match(noiseValueWithQuotes));
+    const isNoise = isString && noiseValueWithQuotes.test(text2);
     if (isNoise)
       return text2.substring(0, text2.length - 1) + 'n"';
     const isFractionalOrExponential = fractional || exponential;
@@ -22038,11 +22038,7 @@ var BASE_SHA;
   let HEAD_SHA = headResult.stdout;
   if (["pull_request", "pull_request_target"].includes(eventName) && !context2.payload.pull_request.merged) {
     const pullRequestEventName = "pull_request";
-    const baseResult = spawnSync("git", [
-      "merge-base",
-      `${remote}/${context2.payload[pullRequestEventName].base.ref}`,
-      "HEAD"
-    ], { encoding: "utf-8" });
+    const baseResult = spawnSync("git", ["merge-base", `${remote}/${context2.payload[pullRequestEventName].base.ref}`, "HEAD"], { encoding: "utf-8" });
     BASE_SHA = baseResult.stdout;
   } else if (eventName == "merge_group" && usePreviousMergeGroupCommit) {
     const baseResult = spawnSync("git", ["rev-parse", "HEAD^1"], {
@@ -22075,7 +22071,9 @@ var BASE_SHA;
             encoding: "utf-8"
           });
           if (baseRes.status !== 0 || !baseRes.stdout) {
-            const emptyTreeRes = spawnSync("git", ["hash-object", "-t", "tree", "/dev/null"], { encoding: "utf-8" });
+            const emptyTreeRes = spawnSync("git", ["hash-object", "-t", "tree", "/dev/null"], {
+              encoding: "utf-8"
+            });
             BASE_SHA = emptyTreeRes.stdout ?? `4b825dc642cb6eb9a060e54bf8d69288fbee4904`;
             process.stdout.write(`HEAD~1 does not exist. We are therefore defaulting to use the empty git tree hash as BASE.
 `);

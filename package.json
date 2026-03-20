@@ -1,26 +1,19 @@
 {
+  "version": "5.0.1",
   "private": true,
-  "version": "5.0.0",
-  "license": "MIT",
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
+  "homepage": "https://github.com/nrwl/nx-set-shas#readme",
+  "bugs": {
+    "url": "https://github.com/nrwl/nx-set-shas/issues"
+  },
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "bun build ./nx-set-shas.ts --outdir ./dist --target node",
     "prepare": "is-ci || husky",
-    "format:check": "prettier --check .",
-    "format": "prettier --write ."
+    "format:check": "oxfmt --check .",
+    "format": "oxfmt --write ."
   },
-  "bugs": {
-    "url": "https://github.com/nrwl/nx-set-shas/issues"
-  },
-  "engines": {
-    "node": ">=24"
-  },
-  "volta": {
-    "node": "24.14.0"
-  },
-  "packageManager": "bun@1.2.19",
-  "homepage": "https://github.com/nrwl/nx-set-shas#readme",
   "dependencies": {
     "@actions/core": "^3.0.0",
     "@actions/github": "^9.0.0"
@@ -30,13 +23,20 @@
     "husky": "^9.1.7",
     "is-ci": "^4.1.0",
     "lint-staged": "^16.1.2",
-    "prettier": "^3.6.2",
+    "oxfmt": "^0.41.0",
     "typescript": "^5.8.3",
     "yoctocolors": "^2.1.1"
   },
   "lint-staged": {
     "*.{ts,json,yml,md}": [
-      "npx prettier --write"
+      "npx oxfmt --write"
     ]
-  }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "volta": {
+    "node": "24.14.0"
+  },
+  "packageManager": "bun@1.2.19"
 }

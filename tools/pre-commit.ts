@@ -26,9 +26,7 @@ try {
     changedFiles.forEach((f) => {
       execSync(`git add ${f}`, { stdio: ['pipe', 'pipe', 'pipe'] });
     });
-    console.log(
-      ` ✔ Commit expanded with ${changedFiles.length} changed file(s)`,
-    );
+    console.log(` ✔ Commit expanded with ${changedFiles.length} changed file(s)`);
   }
 
   execSync(`npm run format`, {

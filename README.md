@@ -46,7 +46,7 @@ jobs:
       # OPTION 1) Environment variables
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
@@ -57,7 +57,7 @@ jobs:
       # ===========================================================================
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         id: setSHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - run: |
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
@@ -73,7 +73,7 @@ jobs:
 <!-- start configuration-options -->
 
 ```yaml
-- uses: nrwl/nx-set-shas@v4
+- uses: nrwl/nx-set-shas@v5
   with:
     # The GitHub token used to perform git operations
     #
@@ -174,7 +174,7 @@ jobs:
         shell: bash
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - run: |
           echo "BASE: ${{ env.NX_BASE }}"
