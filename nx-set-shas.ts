@@ -13,6 +13,7 @@ process.env.GITHUB_TOKEN = core.getInput('gh-token');
 const mainBranchName = core.getInput('main-branch-name');
 const errorOnNoSuccessfulWorkflow = core.getBooleanInput('error-on-no-successful-workflow');
 const lastSuccessfulEvent = core.getInput('last-successful-event');
+const anyLastSuccessfulEvent = core.getBooleanInput('any-last-successful-event');
 const workingDirectory = core.getInput('working-directory');
 const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
@@ -63,6 +64,7 @@ let BASE_SHA: string;
         repo,
         mainBranchName,
         lastSuccessfulEvent,
+        anyLastSuccessfulEvent,
       );
     } catch (e) {
       core.setFailed(e.message);
@@ -167,7 +169,8 @@ async function findSuccessfulCommit(
   owner: string,
   repo: string,
   branch: string,
-  lastSuccessfulEvent: string,
+  lastSuccessfulEvent: string | undefined,
+  anyLastSuccessfulEvent: boolean,
 ): Promise<string | undefined> {
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
@@ -182,6 +185,11 @@ async function findSuccessfulCommit(
     process.stdout.write('\n');
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
   }
+
+  if (anyLastSuccessfulEvent) {
+    lastSuccessfulEvent = undefined;
+  }
+
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   const shas = await octokit
     .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {

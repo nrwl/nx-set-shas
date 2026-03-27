@@ -4,15 +4,29 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+function __accessProp(key) {
+  return this[key];
+}
+var __toESMCache_node;
+var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
+  var canCache = mod != null && typeof mod === "object";
+  if (canCache) {
+    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
+    var cached = cache.get(mod);
+    if (cached)
+      return cached;
+  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: () => mod[key],
+        get: __accessProp.bind(mod, key),
         enumerable: true
       });
+  if (canCache)
+    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
@@ -22014,6 +22028,7 @@ process.env.GITHUB_TOKEN = getInput("gh-token");
 var mainBranchName = getInput("main-branch-name");
 var errorOnNoSuccessfulWorkflow = getBooleanInput("error-on-no-successful-workflow");
 var lastSuccessfulEvent = getInput("last-successful-event");
+var anyLastSuccessfulEvent = getBooleanInput("any-last-successful-event");
 var workingDirectory = getInput("working-directory");
 var workflowId = getInput("workflow-id");
 var fallbackSHA = getInput("fallback-sha");
@@ -22047,7 +22062,7 @@ var BASE_SHA;
     BASE_SHA = baseResult.stdout;
   } else {
     try {
-      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
+      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent, anyLastSuccessfulEvent);
     } catch (e) {
       setFailed(e.message);
       return;
@@ -22129,7 +22144,7 @@ function reportFailure(branchName) {
     - If yes, then you should run the workflow without this flag first.
     - If no, then you might have changed your git history and those commits no longer exist.`);
 }
-async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, lastSuccessfulEvent2) {
+async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, lastSuccessfulEvent2, anyLastSuccessfulEvent2) {
   const octokit = getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
     workflow_id = await octokit.request(`GET /repos/${owner2}/${repo2}/actions/runs/${run_id}`, {
@@ -22142,6 +22157,9 @@ async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, 
 `);
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'
 `);
+  }
+  if (anyLastSuccessfulEvent2) {
+    lastSuccessfulEvent2 = undefined;
   }
   const shas = await octokit.request(`GET /repos/${owner2}/${repo2}/actions/workflows/${workflow_id}/runs`, {
     owner: owner2,
