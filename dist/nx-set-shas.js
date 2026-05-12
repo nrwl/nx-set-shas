@@ -4,15 +4,29 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+function __accessProp(key) {
+  return this[key];
+}
+var __toESMCache_node;
+var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
+  var canCache = mod != null && typeof mod === "object";
+  if (canCache) {
+    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
+    var cached = cache.get(mod);
+    if (cached)
+      return cached;
+  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: () => mod[key],
+        get: __accessProp.bind(mod, key),
         enumerable: true
       });
+  if (canCache)
+    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
@@ -22032,6 +22046,13 @@ var BASE_SHA;
 `);
     }
   }
+  const isShallow = spawnSync("git", ["rev-parse", "--is-shallow-repository"], {
+    encoding: "utf-8"
+  });
+  if (isShallow.stdout?.trim() === "true") {
+    setFailed("Shallow clone detected. nx-set-shas requires fetch-depth: 0 to work correctly. " + "We also recommend filter: tree:0 to reduce checkout size. " + "See https://github.com/nrwl/nx-set-shas for the recommended checkout configuration.");
+    return;
+  }
   const headResult = spawnSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf-8"
   });
@@ -22151,36 +22172,19 @@ async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, 
     event: lastSuccessfulEvent2,
     status: "success"
   }).then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
-  return await findExistingCommit(octokit, branch, shas);
+  return findExistingCommit(branch, shas);
 }
-async function findExistingCommit(octokit, branchName, shas) {
+function findExistingCommit(branchName, shas) {
   for (const commitSha of shas) {
-    if (await commitExists(octokit, branchName, commitSha)) {
+    if (commitExists(branchName, commitSha)) {
       return commitSha;
     }
   }
   return;
 }
-async function commitExists(octokit, branchName, commitSha) {
-  try {
-    spawnSync("git", ["cat-file", "-e", commitSha], {
-      stdio: ["pipe", "pipe", null]
-    });
-    await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}", {
-      owner,
-      repo,
-      commit_sha: commitSha
-    });
-    const commits = await octokit.request("GET /repos/{owner}/{repo}/commits", {
-      owner,
-      repo,
-      sha: branchName,
-      per_page: 100
-    });
-    return commits.data.some((commit) => commit.sha === commitSha);
-  } catch {
-    return false;
-  }
+function commitExists(branchName, commitSha) {
+  const result = spawnSync("git", ["merge-base", "--is-ancestor", commitSha, `${remote}/${branchName}`], { encoding: "utf-8" });
+  return result.status === 0;
 }
 function stripNewLineEndings(string) {
   return string.replace(`

@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { GitHub } from '@actions/github/lib/utils';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
@@ -29,6 +28,19 @@ let BASE_SHA: string;
       process.stdout.write('\n');
       process.stdout.write(`WARNING: Working directory '${workingDirectory}' doesn't exist.\n`);
     }
+  }
+
+  const isShallow = spawnSync('git', ['rev-parse', '--is-shallow-repository'], {
+    encoding: 'utf-8',
+  });
+
+  if (isShallow.stdout?.trim() === 'true') {
+    core.setFailed(
+      'Shallow clone detected. nx-set-shas requires fetch-depth: 0 to work correctly. ' +
+        'We also recommend filter: tree:0 to reduce checkout size. ' +
+        'See https://github.com/nrwl/nx-set-shas for the recommended checkout configuration.',
+    );
+    return;
   }
 
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], {
@@ -200,19 +212,15 @@ async function findSuccessfulCommit(
       workflow_runs.map((run: { head_sha: any }) => run.head_sha),
     );
 
-  return await findExistingCommit(octokit, branch, shas);
+  return findExistingCommit(branch, shas);
 }
 
 /**
  * Get first existing commit
  */
-async function findExistingCommit(
-  octokit: InstanceType<typeof GitHub>,
-  branchName: string,
-  shas: string[],
-): Promise<string | undefined> {
+function findExistingCommit(branchName: string, shas: string[]): string | undefined {
   for (const commitSha of shas) {
-    if (await commitExists(octokit, branchName, commitSha)) {
+    if (commitExists(branchName, commitSha)) {
       return commitSha;
     }
   }
@@ -220,37 +228,16 @@ async function findExistingCommit(
 }
 
 /**
- * Check if given commit is valid
+ * Check if given commit is an ancestor of the branch tip.
+ * Uses `git merge-base --is-ancestor` which is O(1) and has no commit-depth limit.
  */
-async function commitExists(
-  octokit: InstanceType<typeof GitHub>,
-  branchName: string,
-  commitSha: string,
-): Promise<boolean> {
-  try {
-    spawnSync('git', ['cat-file', '-e', commitSha], {
-      stdio: ['pipe', 'pipe', null],
-    });
-
-    // Check the commit exists in general
-    await octokit.request('GET /repos/{owner}/{repo}/commits/{commit_sha}', {
-      owner,
-      repo,
-      commit_sha: commitSha,
-    });
-
-    // Check the commit exists on the expected main branch (it will not in the case of a rebased main branch)
-    const commits = await octokit.request('GET /repos/{owner}/{repo}/commits', {
-      owner,
-      repo,
-      sha: branchName,
-      per_page: 100,
-    });
-
-    return commits.data.some((commit: { sha: string }) => commit.sha === commitSha);
-  } catch {
-    return false;
-  }
+function commitExists(branchName: string, commitSha: string): boolean {
+  const result = spawnSync(
+    'git',
+    ['merge-base', '--is-ancestor', commitSha, `${remote}/${branchName}`],
+    { encoding: 'utf-8' },
+  );
+  return result.status === 0;
 }
 
 /**

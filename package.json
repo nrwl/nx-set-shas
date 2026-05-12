@@ -1,5 +1,5 @@
 {
-  "version": "5.0.1",
+  "version": "6.0.0",
   "private": true,
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
