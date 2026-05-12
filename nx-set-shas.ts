@@ -30,6 +30,19 @@ let BASE_SHA: string;
     }
   }
 
+  const isShallow = spawnSync('git', ['rev-parse', '--is-shallow-repository'], {
+    encoding: 'utf-8',
+  });
+
+  if (isShallow.stdout?.trim() === 'true') {
+    core.setFailed(
+      'Shallow clone detected. nx-set-shas requires fetch-depth: 0 to work correctly. ' +
+        'We also recommend filter: tree:0 to reduce checkout size. ' +
+        'See https://github.com/nrwl/nx-set-shas for the recommended checkout configuration.',
+    );
+    return;
+  }
+
   const headResult = spawnSync('git', ['rev-parse', 'HEAD'], {
     encoding: 'utf-8',
   });
