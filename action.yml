@@ -15,10 +15,10 @@ inputs:
     description: 'Applies the derived SHAs for base and head as NX_BASE and NX_HEAD environment variables within the current Job'
     default: 'true'
   error-on-no-successful-workflow:
-    description: 'By default, if no successful workflow is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.'
+    description: 'By default, if no successful workflow or matching Git tag is found to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.'
     default: 'false'
   fallback-sha:
-    description: 'Fallback SHA to use if no successful workflow run is found.'
+    description: 'Fallback SHA to use if no successful workflow run or matching Git tag is found.'
     required: false
     default: ''
   last-successful-event:
@@ -32,6 +32,12 @@ inputs:
   use-previous-merge-group-commit:
     description: 'When using merge-group, use the previous commit in the group as the base SHA'
     default: 'true'
+  use-git-tags:
+    description: 'Use the nearest matching Git tag reachable from HEAD as the base instead of a successful workflow run'
+    default: 'false'
+  tag-match-pattern:
+    description: 'The glob(7) pattern provided to git describe when use-git-tags is enabled'
+    default: 'nx_successful_ci_run*'
 
 outputs:
   base:

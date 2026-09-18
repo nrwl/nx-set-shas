@@ -11,13 +11,14 @@
 
 - [Example Usage](#example-usage)
 - [Configuration Options](#configuration-options)
+- [Git tag matching](#git-tag-matching)
 - [Permissions in v2+](#permissions-in-v2)
 - [Self-hosted runners](#self-hosted-runners)
 - [Background](#background)
   - [Problem](#problem)
 - [License](#license)
 
-**NOTE:** This documentation is for version `2.x.x` and later which now uses the GitHub API to track successful workflows. You can find documentation for version `1.x.x` which used GIT tags [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
+**NOTE:** Version `2.x.x` and later uses the GitHub API to track successful workflows by default. Version `5.x.x` and later can instead use Git tags as an opt-in. You can find documentation for version `1.x.x`, which used Git tags exclusively, [here](https://github.com/nrwl/nx-set-shas/blob/v1/README.md).
 
 ## Example Usage
 
@@ -96,12 +97,12 @@ jobs:
     # Default: true
     set-environment-variables-for-job: ''
 
-    # By default, if no successful workflow run is found on the main branch to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.
+    # By default, if no successful workflow run or matching Git tag is found to determine the SHA, we will log a warning and use HEAD~1. Enable this option to error and exit instead.
     #
     # Default: false
     error-on-no-successful-workflow: ''
 
-    # Fallback SHA to use if no successful workflow run is found. This can be useful in scenarios where you need a specific commit as a reference for comparison, especially in newly set up repositories or those with sparse workflow runs.
+    # Fallback SHA to use if no successful workflow run or matching Git tag is found. This can be useful in scenarios where you need a specific commit as a reference for comparison, especially in newly set up repositories or those with sparse workflow runs.
     fallback-sha: ''
 
     # The type of event to check for the last successful commit corresponding to that workflow-id, e.g. push, pull_request, release etc.
@@ -123,13 +124,45 @@ jobs:
     #
     # Default: true
     use-previous-merge-group-commit: ''
+
+    # Use the nearest matching Git tag reachable from HEAD as the base instead of a successful workflow run.
+    #
+    # Default: false
+    use-git-tags: ''
+
+    # The glob(7) pattern provided to git describe when use-git-tags is enabled.
+    #
+    # Default: "nx_successful_ci_run*"
+    tag-match-pattern: ''
 ```
 
 <!-- end configuration-options -->
 
+## Git tag matching
+
+Set `use-git-tags` to `true` to use a Git tag as the base for non-PR workflows. The action uses `git describe` to find the nearest matching tag reachable from `HEAD`, then resolves that tag to a commit SHA. The head remains the current `HEAD`.
+
+```yaml
+- uses: actions/checkout@v6
+  with:
+    # The tag lookup requires the full Git history and tags.
+    fetch-depth: 0
+
+- uses: nrwl/nx-set-shas@v5
+  with:
+    use-git-tags: 'true'
+    tag-match-pattern: 'nx_successful_ci_run*'
+```
+
+The default pattern matches tags created for version 1 by the complementary [`nrwl/nx-tag-successful-ci-run`](https://github.com/nrwl/nx-tag-successful-ci-run) action. This action only reads tags. It does not create or push them.
+
+Unmerged pull request workflows continue to use the PR merge base. Merge-group workflows continue to use the previous group commit when `use-previous-merge-group-commit` is enabled.
+
+If no tag matches, `fallback-sha`, `error-on-no-successful-workflow`, and the existing `HEAD~1` fallback work as usual. The tag lookup does not require the Actions API permissions described below.
+
 ## Permissions in v2+
 
-This Action uses Github API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set please ensure you override them for the workflow to enable read access to `actions` and `contents`. If you are using the action with `merge queues` you will need to enable also `pull-request` permission:
+By default, this action uses the GitHub API to find the last successful workflow run. If your `GITHUB_TOKEN` has restrictions set, override them for the workflow to enable read access to `actions` and `contents`. If you use the action with merge queues, also enable `pull-request` permission:
 
 <!-- start permissions-in-v2 -->
 

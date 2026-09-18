@@ -1,5 +1,5 @@
 {
-  "version": "5.0.1",
+  "version": "5.1.0",
   "private": true,
   "description": "This package.json is here purely to control the version of the Action, in combination with https://github.com/JamesHenry/publish-shell-action",
   "homepage": "https://github.com/nrwl/nx-set-shas#readme",
@@ -10,6 +10,7 @@
   "type": "module",
   "scripts": {
     "build": "bun build ./nx-set-shas.ts --outdir ./dist --target node",
+    "test": "bun run build && bun test",
     "prepare": "is-ci || husky",
     "format:check": "oxfmt --check .",
     "format": "oxfmt --write ."
