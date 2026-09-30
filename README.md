@@ -123,6 +123,22 @@ jobs:
     #
     # Default: true
     use-previous-merge-group-commit: ''
+
+    # How to find the last successful workflow run on the main branch.
+    # - 'list': lists the latest successful runs of the workflow and uses the first one whose commit is among the latest 100 commits of the main branch.
+    # - 'per-commit': walks the first-parent git history before HEAD and queries the runs of each commit (by head SHA),
+    #   using the first commit that has a successful run. Every candidate is an ancestor of HEAD, so it is not limited to the latest 100 commits.
+    #   This avoids relying on the list of latest runs, which can be stale on repositories with many workflow runs.
+    #   Requires the git history to be available (e.g. 'fetch-depth: 0') and makes up to one API request per checked commit.
+    #
+    # Default: "list"
+    lookup-strategy: ''
+
+    # The maximum number of commits to check when 'lookup-strategy' is 'per-commit'.
+    # If none of them has a successful run, the usual fallback applies ('fallback-sha', HEAD~1 or 'error-on-no-successful-workflow').
+    #
+    # Default: 100
+    max-commits: ''
 ```
 
 <!-- end configuration-options -->

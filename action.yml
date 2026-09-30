@@ -32,6 +32,12 @@ inputs:
   use-previous-merge-group-commit:
     description: 'When using merge-group, use the previous commit in the group as the base SHA'
     default: 'true'
+  lookup-strategy:
+    description: "How to find the last successful workflow run. 'list' lists the latest successful runs of the workflow and checks that their commit is among the latest 100 commits of the main branch. 'per-commit' walks the first-parent git history before HEAD and queries the runs of each commit (by head SHA), using the first commit with a successful run"
+    default: 'list'
+  max-commits:
+    description: "The maximum number of commits to check when 'lookup-strategy' is 'per-commit'"
+    default: '100'
 
 outputs:
   base:
