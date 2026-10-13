@@ -18,10 +18,25 @@ const workflowId = core.getInput('workflow-id');
 const fallbackSHA = core.getInput('fallback-sha');
 const remote = core.getInput('remote');
 const usePreviousMergeGroupCommit = core.getBooleanInput('use-previous-merge-group-commit');
+const lookupStrategy = core.getInput('lookup-strategy') || 'list';
+const maxCommitsInput = core.getInput('max-commits') || '100';
 const defaultWorkingDirectory = '.';
+const lookupStrategies = ['list', 'per-commit'];
 
 let BASE_SHA: string;
 (async () => {
+  if (!lookupStrategies.includes(lookupStrategy)) {
+    core.setFailed(
+      `Invalid 'lookup-strategy' value '${lookupStrategy}'. Expected one of: ${lookupStrategies.join(', ')}`,
+    );
+    return;
+  }
+  const maxCommits = Number(maxCommitsInput);
+  if (!Number.isInteger(maxCommits) || maxCommits < 1) {
+    core.setFailed(`Invalid 'max-commits' value '${maxCommitsInput}'. Expected a positive integer`);
+    return;
+  }
+
   if (workingDirectory !== defaultWorkingDirectory) {
     if (existsSync(workingDirectory)) {
       process.chdir(workingDirectory);
@@ -63,6 +78,8 @@ let BASE_SHA: string;
         repo,
         mainBranchName,
         lastSuccessfulEvent,
+        lookupStrategy,
+        maxCommits,
       );
     } catch (e) {
       core.setFailed(e.message);
@@ -168,6 +185,8 @@ async function findSuccessfulCommit(
   repo: string,
   branch: string,
   lastSuccessfulEvent: string,
+  lookupStrategy: string,
+  maxCommits: number,
 ): Promise<string | undefined> {
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
@@ -182,16 +201,30 @@ async function findSuccessfulCommit(
     process.stdout.write('\n');
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'\n`);
   }
+  // on some workflow runs we do not have branch property
+  const branchFilter =
+    lastSuccessfulEvent === 'push' || lastSuccessfulEvent === 'workflow_dispatch'
+      ? branch
+      : undefined;
+
+  if (lookupStrategy === 'per-commit') {
+    return await findSuccessfulCommitPerCommit(
+      octokit,
+      workflow_id,
+      owner,
+      repo,
+      branchFilter,
+      lastSuccessfulEvent,
+      maxCommits,
+    );
+  }
+
   // fetch all workflow runs on a given repo/branch/workflow with push and success
   const shas = await octokit
     .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
       owner,
       repo,
-      // on some workflow runs we do not have branch property
-      branch:
-        lastSuccessfulEvent === 'push' || lastSuccessfulEvent === 'workflow_dispatch'
-          ? branch
-          : undefined,
+      branch: branchFilter,
       workflow_id,
       event: lastSuccessfulEvent,
       status: 'success',
@@ -201,6 +234,58 @@ async function findSuccessfulCommit(
     );
 
   return await findExistingCommit(octokit, branch, shas);
+}
+
+/**
+ * Walk the first-parent history of the current commit (excluding the current commit itself)
+ * and return the first commit that has a successful run of the given workflow and event.
+ * Every candidate is an ancestor of HEAD by construction, so no branch membership check is needed.
+ */
+async function findSuccessfulCommitPerCommit(
+  octokit: InstanceType<typeof GitHub>,
+  workflow_id: string | number,
+  owner: string,
+  repo: string,
+  branch: string | undefined,
+  lastSuccessfulEvent: string,
+  maxCommits: number,
+): Promise<string | undefined> {
+  const revListResult = spawnSync(
+    'git',
+    ['rev-list', '--first-parent', `--max-count=${maxCommits}`, 'HEAD~1'],
+    { encoding: 'utf-8' },
+  );
+  if (revListResult.status !== 0) {
+    process.stdout.write('\n');
+    process.stdout.write(
+      `WARNING: Unable to list the git history of HEAD~1. Make sure the repository is checked out with enough history (e.g. 'fetch-depth: 0').\n`,
+    );
+    return undefined;
+  }
+  const shas = revListResult.stdout.split('\n').filter(Boolean);
+
+  for (const sha of shas) {
+    const runs = await octokit
+      .request(`GET /repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs`, {
+        owner,
+        repo,
+        branch,
+        workflow_id,
+        event: lastSuccessfulEvent,
+        head_sha: sha,
+        per_page: 100,
+      })
+      .then(({ data: { workflow_runs } }) => workflow_runs);
+    if (runs.some((run: { conclusion: string | null }) => run.conclusion === 'success')) {
+      return sha;
+    }
+  }
+
+  process.stdout.write('\n');
+  process.stdout.write(
+    `No successful '${lastSuccessfulEvent}' workflow run found for the last ${shas.length} commit(s) before HEAD. You can increase this limit with 'max-commits'.\n`,
+  );
+  return undefined;
 }
 
 /**

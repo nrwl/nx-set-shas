@@ -22019,9 +22019,21 @@ var workflowId = getInput("workflow-id");
 var fallbackSHA = getInput("fallback-sha");
 var remote = getInput("remote");
 var usePreviousMergeGroupCommit = getBooleanInput("use-previous-merge-group-commit");
+var lookupStrategy = getInput("lookup-strategy") || "list";
+var maxCommitsInput = getInput("max-commits") || "100";
 var defaultWorkingDirectory = ".";
+var lookupStrategies = ["list", "per-commit"];
 var BASE_SHA;
 (async () => {
+  if (!lookupStrategies.includes(lookupStrategy)) {
+    setFailed(`Invalid 'lookup-strategy' value '${lookupStrategy}'. Expected one of: ${lookupStrategies.join(", ")}`);
+    return;
+  }
+  const maxCommits = Number(maxCommitsInput);
+  if (!Number.isInteger(maxCommits) || maxCommits < 1) {
+    setFailed(`Invalid 'max-commits' value '${maxCommitsInput}'. Expected a positive integer`);
+    return;
+  }
   if (workingDirectory !== defaultWorkingDirectory) {
     if (existsSync3(workingDirectory)) {
       process.chdir(workingDirectory);
@@ -22047,7 +22059,7 @@ var BASE_SHA;
     BASE_SHA = baseResult.stdout;
   } else {
     try {
-      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent);
+      BASE_SHA = await findSuccessfulCommit(workflowId, runId, owner, repo, mainBranchName, lastSuccessfulEvent, lookupStrategy, maxCommits);
     } catch (e) {
       setFailed(e.message);
       return;
@@ -22129,7 +22141,7 @@ function reportFailure(branchName) {
     - If yes, then you should run the workflow without this flag first.
     - If no, then you might have changed your git history and those commits no longer exist.`);
 }
-async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, lastSuccessfulEvent2) {
+async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, lastSuccessfulEvent2, lookupStrategy2, maxCommits) {
   const octokit = getOctokit(process.env.GITHUB_TOKEN);
   if (!workflow_id) {
     workflow_id = await octokit.request(`GET /repos/${owner2}/${repo2}/actions/runs/${run_id}`, {
@@ -22143,15 +22155,50 @@ async function findSuccessfulCommit(workflow_id, run_id, owner2, repo2, branch, 
     process.stdout.write(`Workflow Id not provided. Using workflow '${workflow_id}'
 `);
   }
+  const branchFilter = lastSuccessfulEvent2 === "push" || lastSuccessfulEvent2 === "workflow_dispatch" ? branch : undefined;
+  if (lookupStrategy2 === "per-commit") {
+    return await findSuccessfulCommitPerCommit(octokit, workflow_id, owner2, repo2, branchFilter, lastSuccessfulEvent2, maxCommits);
+  }
   const shas = await octokit.request(`GET /repos/${owner2}/${repo2}/actions/workflows/${workflow_id}/runs`, {
     owner: owner2,
     repo: repo2,
-    branch: lastSuccessfulEvent2 === "push" || lastSuccessfulEvent2 === "workflow_dispatch" ? branch : undefined,
+    branch: branchFilter,
     workflow_id,
     event: lastSuccessfulEvent2,
     status: "success"
   }).then(({ data: { workflow_runs } }) => workflow_runs.map((run) => run.head_sha));
   return await findExistingCommit(octokit, branch, shas);
+}
+async function findSuccessfulCommitPerCommit(octokit, workflow_id, owner2, repo2, branch, lastSuccessfulEvent2, maxCommits) {
+  const revListResult = spawnSync("git", ["rev-list", "--first-parent", `--max-count=${maxCommits}`, "HEAD~1"], { encoding: "utf-8" });
+  if (revListResult.status !== 0) {
+    process.stdout.write(`
+`);
+    process.stdout.write(`WARNING: Unable to list the git history of HEAD~1. Make sure the repository is checked out with enough history (e.g. 'fetch-depth: 0').
+`);
+    return;
+  }
+  const shas = revListResult.stdout.split(`
+`).filter(Boolean);
+  for (const sha of shas) {
+    const runs = await octokit.request(`GET /repos/${owner2}/${repo2}/actions/workflows/${workflow_id}/runs`, {
+      owner: owner2,
+      repo: repo2,
+      branch,
+      workflow_id,
+      event: lastSuccessfulEvent2,
+      head_sha: sha,
+      per_page: 100
+    }).then(({ data: { workflow_runs } }) => workflow_runs);
+    if (runs.some((run) => run.conclusion === "success")) {
+      return sha;
+    }
+  }
+  process.stdout.write(`
+`);
+  process.stdout.write(`No successful '${lastSuccessfulEvent2}' workflow run found for the last ${shas.length} commit(s) before HEAD. You can increase this limit with 'max-commits'.
+`);
+  return;
 }
 async function findExistingCommit(octokit, branchName, shas) {
   for (const commitSha of shas) {
